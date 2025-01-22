@@ -134,3 +134,34 @@ func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 		"user":    user,
 	})
 }
+
+func (h *UserHandler) Update(c *fiber.Ctx) error {
+	var user model.UpdateRequest
+	if err := c.BodyParser(&user); err != nil {
+		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
+			"message": "Please fill all the require fields",
+			"error":   err.Error(),
+		})
+	}
+
+	userID, ok := c.Locals(Constance.UserID_ctx).(string)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   "Invalid user ID",
+		})
+	}
+	user.ID = userID
+	selectUser, err := h.userUsecase.Update(user)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err.Error(),
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "success",
+		"user":    selectUser,
+	})
+
+}

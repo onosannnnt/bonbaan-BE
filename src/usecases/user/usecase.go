@@ -18,6 +18,7 @@ type UserUsecase interface {
 	Logout(token string) error
 	Me(userId string) (user Entities.User, err error)
 	ChangePassword(userId string, password model.ChangePasswordRequest) (user Entities.User, err error)
+	Update(user model.UpdateRequest) (*Entities.User, error)
 }
 
 // ส่วนที่ต่อกับ driver handler
@@ -95,6 +96,24 @@ func (s *UserService) ChangePassword(userId string, password model.ChangePasswor
 		return Entities.User{}, err
 	}
 	return *selectUser, nil
+}
+
+func (s *UserService) Update(user model.UpdateRequest) (*Entities.User, error) {
+	selectUser, err := s.userRepo.FindByID(&user.ID)
+	if err != nil {
+		return nil, err
+	}
+	selectUser.Username = user.Username
+	selectUser.Firstname = user.FirstName
+	selectUser.Lastname = user.LastName
+	selectUser.Email = user.Email
+	selectUser.Role.Role = user.Role
+
+	selectUser, err = s.userRepo.Update(*selectUser)
+	if err != nil {
+		return nil, err
+	}
+	return selectUser, nil
 }
 
 // $2a$10$KRQhfyL6fHzC83iCebu.dO0HvLcsHwfpL4gYTJluV7i8eJthI8fva
