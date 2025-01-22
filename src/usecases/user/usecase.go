@@ -7,6 +7,7 @@ import (
 	"github.com/onosannnnt/bonbaan-BE/src/Config"
 	"github.com/onosannnnt/bonbaan-BE/src/Constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
+	"github.com/onosannnnt/bonbaan-BE/src/model"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,6 +17,7 @@ type UserUsecase interface {
 	Login(user Entities.User) (token string, err error)
 	Logout(token string) error
 	Me(userId string) (user Entities.User, err error)
+	ChangePassword(userId string, password model.ChangePasswordRequest) (user Entities.User, err error)
 }
 
 // ส่วนที่ต่อกับ driver handler
@@ -74,3 +76,25 @@ func (s *UserService) Me(userId string) (Entities.User, error) {
 	}
 	return *selectUser, nil
 }
+
+func (s *UserService) ChangePassword(userId string, password model.ChangePasswordRequest) (Entities.User, error) {
+	selectUser, err := s.userRepo.FindByID(&userId)
+	if err != nil {
+		return Entities.User{}, err
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(selectUser.Password), []byte(password.OldPassword)); err != nil {
+		return Entities.User{}, err
+	}
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return Entities.User{}, err
+	}
+	selectUser.Password = string(hashPassword)
+	selectUser, err = s.userRepo.Update(*selectUser)
+	if err != nil {
+		return Entities.User{}, err
+	}
+	return *selectUser, nil
+}
+
+// $2a$10$KRQhfyL6fHzC83iCebu.dO0HvLcsHwfpL4gYTJluV7i8eJthI8fva

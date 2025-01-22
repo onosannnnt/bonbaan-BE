@@ -46,3 +46,10 @@ func (d *UserDriver) FindByID(id *string) (*Entities.User, error) {
 	}
 	return &selectUser, nil
 }
+
+func (d *UserDriver) Update(user Entities.User) (*Entities.User, error) {
+	if err := d.db.Model(&user).Updates(user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}

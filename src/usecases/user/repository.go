@@ -7,4 +7,5 @@ type UserRepository interface {
 	Insert(user Entities.User) error
 	FindByEmailOrUsername(user *Entities.User) (*Entities.User, error)
 	FindByID(id *string) (*Entities.User, error)
+	Update(user Entities.User) (*Entities.User, error)
 }
