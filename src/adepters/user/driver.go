@@ -53,3 +53,11 @@ func (d *UserDriver) Update(user Entities.User) (*Entities.User, error) {
 	}
 	return &user, nil
 }
+
+func (d *UserDriver) FindAll() ([]Entities.User, error) {
+	var users []Entities.User
+	if err := d.db.Preload("Role").Find(&users).Error; err != nil {
+		return nil, err
+	}
+	return users, nil
+}

@@ -134,3 +134,17 @@ func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 		"user":    user,
 	})
 }
+
+func (h *UserHandler) GetAll(c *fiber.Ctx) error {
+	users, err := h.userUsecase.GetAll()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err.Error(),
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "success",
+		"users":   users,
+	})
+}
