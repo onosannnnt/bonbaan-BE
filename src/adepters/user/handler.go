@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/onosannnnt/bonbaan-BE/src/Constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
+	"github.com/onosannnnt/bonbaan-BE/src/model"
 	userUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/user"
 )
 
@@ -110,5 +111,26 @@ func (h *UserHandler) Logout(c *fiber.Ctx) error {
 	})
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "success",
+	})
+}
+
+func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
+	changePasswordRequest := model.ChangePasswordRequest{}
+	if err := c.BodyParser(&changePasswordRequest); err != nil {
+		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
+			"message": "Please fill all the require fields",
+			"error":   err.Error(),
+		})
+	}
+	user, err := h.userUsecase.ChangePassword(c.Locals(Constance.UserID_ctx).(string), changePasswordRequest)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err.Error(),
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "success",
+		"user":    user,
 	})
 }
