@@ -53,3 +53,10 @@ func (d *UserDriver) Update(user Entities.User) (*Entities.User, error) {
 	}
 	return &user, nil
 }
+
+func (d *UserDriver) Delete(id *string) error {
+	if err := d.db.Where("id = ?", *id).Delete(&Entities.User{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
