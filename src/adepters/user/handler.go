@@ -53,6 +53,12 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	var loginRequest LoginRequest
 	var user Entities.User
 	if err := c.BodyParser(&loginRequest); err != nil {
+		if err.Error() == "crypto/bcrypt: hashedPassword is not the hash of the given password" {
+			return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
+				"message": "Invalid email, username or password",
+				"error":   err.Error(),
+			})
+		}
 		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
 			"message": "Please fill all the require fields",
 			"error":   err.Error(),
