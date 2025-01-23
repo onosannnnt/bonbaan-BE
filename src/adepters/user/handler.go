@@ -67,7 +67,7 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 		SameSite: "None",
 		HTTPOnly: true,
 	})
-	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, map[string]string{"token": *token})
 }
 
 func (h *UserHandler) Me(c *fiber.Ctx) error {
@@ -134,6 +134,11 @@ func (h *UserHandler) Delete(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
+	c.Cookie(&fiber.Cookie{
+		Name:    "token",
+		Expires: time.Now().Add(-time.Hour * 24),
+		Value:   "",
+	})
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
 
 }
