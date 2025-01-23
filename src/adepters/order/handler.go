@@ -37,6 +37,7 @@ func (h *OrderHandler) Insert(c *fiber.Ctx) error {
 	insertOrder.Dateline = time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, time.UTC)
 	insertOrder.UserID = uuid.MustParse(order.UserID)
 	insertOrder.StatusID = uuid.MustParse(order.StatusID)
+	insertOrder.ServiceID = uuid.MustParse(order.ServiceID)
 	if err := h.OrderUsecase.Insert(&insertOrder); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to insert order", nil, err)
 	}
@@ -71,7 +72,7 @@ func (h *OrderHandler) Update(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", nil, err)
 	}
 	updateOrder := Entities.Order{}
-	updateOrder.ID = uuid.MustParse(id)
+	updateOrder.ID = id
 	updateOrder.StatusID = uuid.MustParse(order.StatusID)
 	if err := h.OrderUsecase.Update(&id, &updateOrder); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to update order", nil, err)

@@ -27,7 +27,10 @@ func (d *OrderDriver) Insert(order *Entities.Order) error {
 
 func (d *OrderDriver) FindAll(page *int, count *int) ([]*Entities.Order, error) {
 	var selectOrder []*Entities.Order
-	if err := d.db.Preload("Status").Preload("User").Order("created_at desc").Limit(*count).Find(&selectOrder).Offset(*page).Error; err != nil {
+	if err := d.db.Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Omit("password")
+
+	}).Preload("Service").Order("created_at desc").Limit(*count).Find(&selectOrder).Offset(*page).Error; err != nil {
 		return nil, err
 	}
 	return selectOrder, nil
@@ -35,7 +38,10 @@ func (d *OrderDriver) FindAll(page *int, count *int) ([]*Entities.Order, error) 
 
 func (d *OrderDriver) FindOne(id *string) (*Entities.Order, error) {
 	var selectOrder Entities.Order
-	if err := d.db.Preload("Status").Preload("User").Where("id = ?", id).First(&selectOrder).Error; err != nil {
+	if err := d.db.Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Omit("password")
+
+	}).Preload("Service").Where("id = ?", id).First(&selectOrder).Error; err != nil {
 		return nil, err
 	}
 	return &selectOrder, nil

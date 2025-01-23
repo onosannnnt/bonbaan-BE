@@ -13,5 +13,6 @@ type OrderInsertRequest struct {
 	OrderDetail        JSONB  `json:"orderDetail"`
 	UserID             string `json:"userID"`
 	StatusID           string `json:"statusID"`
+	ServiceID          string `json:"serviceID"`
 	Dateline           string `json:"dateline"`
 }

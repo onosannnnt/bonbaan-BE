@@ -27,6 +27,8 @@ func main() {
 	//Initialize Entities
 	Entities.InitEntity(db)
 
+	//check Entities in database
+
 	if err != nil {
 		panic("failed to connect database")
 	}
@@ -39,6 +41,7 @@ func main() {
 	router.InitRoleRouter(app, db)
 	router.InitStatusRouter(app, db)
 	router.InitOrderRouter(app, db)
+	router.ServiceRouter(app, db)
 
 	app.Listen(":" + Config.Port)
 }

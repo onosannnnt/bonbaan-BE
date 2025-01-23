@@ -7,4 +7,5 @@ import (
 type RoleRepository interface {
 	Insert(role *Entities.Role) error
 	GetAll() (*[]Entities.Role, error)
+	
 }
