@@ -3,7 +3,7 @@ package userUsecase
 import (
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/onosannnnt/bonbaan-BE/src/Config"
 	"github.com/onosannnnt/bonbaan-BE/src/Constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
@@ -52,15 +52,16 @@ func (s *UserService) Login(user *Entities.User) (*string, error) {
 	if err := bcrypt.CompareHashAndPassword([]byte(selectUser.Password), []byte(user.Password)); err != nil {
 		return nil, err
 	}
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	claims[Constance.Email_ctx] = selectUser.Email
-	claims[Constance.Username_ctx] = selectUser.Username
-	claims[Constance.UserID_ctx] = selectUser.ID
-	claims[Constance.Role_ctx] = selectUser.Role.Role
-	claims["exp"] = time.Now().Add(time.Hour * 24 * 3).Unix()
-	tokenString, err := token.SignedString([]byte(Config.JwtSecret))
 
+	claims := jwt.MapClaims{
+		Constance.Email_ctx:    selectUser.Email,
+		Constance.Username_ctx: selectUser.Username,
+		Constance.UserID_ctx:   selectUser.ID,
+		Constance.Role_ctx:     selectUser.Role.Role,
+		"exp":                  time.Now().Add(time.Hour * 24 * 3).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(Config.JwtSecret))
 	if err != nil {
 		return nil, err
 	}

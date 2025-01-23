@@ -15,8 +15,8 @@ func ServiceRouter(app *fiber.App, db *gorm.DB) {
 
 	ser := app.Group("/services")
 	ser.Post("/create", serviceHandler.CreateService)
-	ser.Get("/", serviceHandler.GetAll)
-	ser.Get("/:id", serviceHandler.GetByID)
+	ser.Get("/", serviceHandler.GetAllServices)
+	ser.Get("/:id", serviceHandler.GetByServiceID)
 	ser.Patch("/update/:id", serviceHandler.UpdateService) // Updated route to include ID parameter
-	
+
 }
