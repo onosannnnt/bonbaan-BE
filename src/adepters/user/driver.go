@@ -21,8 +21,8 @@ func NewUserDriver(db *gorm.DB) userUsecase.UserRepository {
 }
 
 // ส่วนของการทำงานของ UserDriver
-func (d *UserDriver) Insert(user Entities.User) error {
-	if err := d.db.Create(&user).Error; err != nil {
+func (d *UserDriver) Insert(user *Entities.User) error {
+	if err := d.db.Create(user).Error; err != nil {
 		if err.Error() == "ERROR: duplicate key value violates unique constraint \"uni_users_username\" (SQLSTATE 23505)" {
 			return errors.New("this account already exists")
 		}
@@ -47,9 +47,24 @@ func (d *UserDriver) FindByID(id *string) (*Entities.User, error) {
 	return &selectUser, nil
 }
 
-func (d *UserDriver) Update(user Entities.User) (*Entities.User, error) {
-	if err := d.db.Model(&user).Updates(user).Error; err != nil {
+func (d *UserDriver) Update(user *Entities.User) (*Entities.User, error) {
+	if err := d.db.Model(user).Updates(user).Error; err != nil {
 		return nil, err
 	}
-	return &user, nil
+	return user, nil
+}
+
+func (d *UserDriver) Delete(id *string) error {
+	if err := d.db.Where("id = ?", *id).Delete(&Entities.User{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *UserDriver) FindAll() (*[]Entities.User, error) {
+	var users []Entities.User
+	if err := d.db.Preload("Role").Find(&users).Error; err != nil {
+		return nil, err
+	}
+	return &users, nil
 }
