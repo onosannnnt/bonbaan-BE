@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -30,10 +31,14 @@ func main() {
 		panic("failed to connect database")
 	}
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: math.MaxInt64,
+	})
 
 	router.InitUserRouter(app, db)
 	router.InitRoleRouter(app, db)
+	router.InitStatusRouter(app, db)
+	router.InitOrderRouter(app, db)
 
 	app.Listen(":" + Config.Port)
 }
