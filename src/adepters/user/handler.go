@@ -1,8 +1,6 @@
 package userAdepter
 
 import (
-	"time"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/onosannnnt/bonbaan-BE/src/Constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
@@ -59,14 +57,6 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "Invalid email, username or password", err, nil)
 	}
-	c.Cookie(&fiber.Cookie{
-		Name:     "token",
-		Value:    *token,
-		Expires:  time.Now().Add(time.Hour * 24 * 3),
-		Secure:   true,
-		SameSite: "None",
-		HTTPOnly: true,
-	})
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, map[string]string{"token": *token})
 }
 
@@ -77,16 +67,6 @@ func (h *UserHandler) Me(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, user)
-}
-
-func (h *UserHandler) Logout(c *fiber.Ctx) error {
-	// Attempt to clear the cookie
-	c.Cookie(&fiber.Cookie{
-		Name:    "token",
-		Expires: time.Now().Add(-time.Hour * 24),
-		Value:   "",
-	})
-	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
 }
 
 func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
@@ -128,17 +108,13 @@ func (h *UserHandler) Update(c *fiber.Ctx) error {
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, selectUser)
 }
+
 func (h *UserHandler) Delete(c *fiber.Ctx) error {
 	userID := c.Locals(Constance.UserID_ctx).(string)
 	err := h.userUsecase.Delete(&userID)
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
-	c.Cookie(&fiber.Cookie{
-		Name:    "token",
-		Expires: time.Now().Add(-time.Hour * 24),
-		Value:   "",
-	})
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
 
 }

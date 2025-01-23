@@ -1,22 +1,29 @@
 package middleware
 
 import (
+	"fmt"
+
+	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/onosannnnt/bonbaan-BE/src/Config"
 	"github.com/onosannnnt/bonbaan-BE/src/Constance"
 	"github.com/onosannnnt/bonbaan-BE/src/utils"
 )
 
 func IsAuth(c *fiber.Ctx) error {
-	cookie := c.Get("token")
-	if cookie == "" {
-		cookie = c.Cookies("token")
+	jwtware.New(jwtware.Config{
+		SigningKey: jwtware.SigningKey{Key: []byte(Config.JwtSecret)},
+		ContextKey: "jwt",
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return utils.ResponseJSON(c, fiber.StatusUnauthorized, "Unauthorized", err, nil)
+		},
+	})
+	authHeader := c.Get("Authorization")
+	if authHeader != "" {
+		authHeader = authHeader[len("Bearer "):]
 	}
-	if cookie == "" {
-		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "Unauthorized", nil, nil)
-	}
-	token, err := jwt.ParseWithClaims(cookie, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(authHeader, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(Config.JwtSecret), nil
 	})
 	if err != nil || !token.Valid {
@@ -32,7 +39,8 @@ func IsAuth(c *fiber.Ctx) error {
 
 func IsAdmin(c *fiber.Ctx) error {
 	role, ok := c.Locals(Constance.Role_ctx).(string)
-	if !ok && role != Constance.Admin_Role_ctx {
+	fmt.Println(role)
+	if !ok || role != Constance.Admin_Role_ctx {
 		return utils.ResponseJSON(c, fiber.StatusForbidden, "Forbidden", nil, nil)
 	}
 
