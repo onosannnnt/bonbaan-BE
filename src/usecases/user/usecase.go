@@ -13,12 +13,12 @@ import (
 
 // ส่วนที่ต่อกับ input handler
 type UserUsecase interface {
-	Register(user Entities.User) error
-	Login(user Entities.User) (token string, err error)
-	Logout(token string) error
-	Me(userId string) (user Entities.User, err error)
-	ChangePassword(userId string, password model.ChangePasswordRequest) (user Entities.User, err error)
-	Delete(userId string) error
+	Register(user *Entities.User) error
+	Login(user *Entities.User) (token *string, err error)
+	Me(userId *string) (user *Entities.User, err error)
+	ChangePassword(userId *string, password *model.ChangePasswordRequest) (*Entities.User, error)
+	GetAll() (*[]Entities.User, error)
+	Delete(userId *string) error
 }
 
 // ส่วนที่ต่อกับ driver handler
@@ -34,7 +34,7 @@ func NewUserService(repo UserRepository) UserUsecase {
 }
 
 // ส่วนของการทำงานของ UserService
-func (s *UserService) Register(user Entities.User) error {
+func (s *UserService) Register(user *Entities.User) error {
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -43,13 +43,13 @@ func (s *UserService) Register(user Entities.User) error {
 	return s.userRepo.Insert(user)
 }
 
-func (s *UserService) Login(user Entities.User) (string, error) {
-	selectUser, err := s.userRepo.FindByEmailOrUsername(&user)
+func (s *UserService) Login(user *Entities.User) (*string, error) {
+	selectUser, err := s.userRepo.FindByEmailOrUsername(user)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(selectUser.Password), []byte(user.Password)); err != nil {
-		return "", err
+		return nil, err
 	}
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
@@ -61,45 +61,46 @@ func (s *UserService) Login(user Entities.User) (string, error) {
 	tokenString, err := token.SignedString([]byte(Config.JwtSecret))
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return tokenString, nil
+	return &tokenString, nil
 }
 
-func (s *UserService) Logout(token string) error {
-	return nil
-}
-
-func (s *UserService) Me(userId string) (Entities.User, error) {
-	selectUser, err := s.userRepo.FindByID(&userId)
+func (s *UserService) Me(userId *string) (*Entities.User, error) {
+	selectUser, err := s.userRepo.FindByID(userId)
 	if err != nil {
-		return Entities.User{}, err
+		return &Entities.User{}, err
 	}
-	return *selectUser, nil
+	return selectUser, nil
 }
 
-func (s *UserService) ChangePassword(userId string, password model.ChangePasswordRequest) (Entities.User, error) {
-	selectUser, err := s.userRepo.FindByID(&userId)
+func (s *UserService) ChangePassword(userId *string, password *model.ChangePasswordRequest) (*Entities.User, error) {
+	selectUser, err := s.userRepo.FindByID(userId)
 	if err != nil {
-		return Entities.User{}, err
+		return &Entities.User{}, err
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(selectUser.Password), []byte(password.OldPassword)); err != nil {
-		return Entities.User{}, err
+		return &Entities.User{}, err
 	}
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
-		return Entities.User{}, err
+		return &Entities.User{}, err
 	}
 	selectUser.Password = string(hashPassword)
-	selectUser, err = s.userRepo.Update(*selectUser)
+	selectUser, err = s.userRepo.Update(selectUser)
 	if err != nil {
-		return Entities.User{}, err
+		return &Entities.User{}, err
 	}
-	return *selectUser, nil
+	return selectUser, nil
 }
 
-func (s *UserService) Delete(userId string) error {
-	return s.userRepo.Delete(&userId)
+func (s *UserService) GetAll() (*[]Entities.User, error) {
+	users, err := s.userRepo.FindAll()
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
-
-// $2a$10$KRQhfyL6fHzC83iCebu.dO0HvLcsHwfpL4gYTJluV7i8eJthI8fva
+func (s *UserService) Delete(userId *string) error {
+	return s.userRepo.Delete(userId)
+}

@@ -8,6 +8,7 @@ import (
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	userUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/user"
+	"github.com/onosannnnt/bonbaan-BE/src/utils"
 )
 
 // ส่วนที่ต่อกับ input handler
@@ -27,20 +28,12 @@ func (h *UserHandler) Register() func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		user := Entities.User{}
 		if err := c.BodyParser(&user); err != nil {
-			return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
-				"message": "Please fill all the require fields",
-				"error":   err.Error(),
-			})
+			return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
 		}
-		if err := h.userUsecase.Register(user); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal Server Error",
-				"error":   err.Error(),
-			})
+		if err := h.userUsecase.Register(&user); err != nil {
+			return utils.ResponseJSON(c, fiber.StatusConflict, "this account already exists", err, nil)
 		}
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"message": "success",
-		})
+		return utils.ResponseJSON(c, fiber.StatusCreated, "success", nil, nil)
 	}
 }
 
@@ -55,51 +48,35 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	var user Entities.User
 	if err := c.BodyParser(&loginRequest); err != nil {
 		if err.Error() == "crypto/bcrypt: hashedPassword is not the hash of the given password" {
-			return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
-				"message": "Invalid email, username or password",
-				"error":   err.Error(),
-			})
+			return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Invalid email, username or password", err, nil)
 		}
-		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
-			"message": "Please fill all the require fields",
-			"error":   err.Error(),
-		})
+		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
 	}
 	user.Email = loginRequest.EmailOrUsername
 	user.Username = loginRequest.EmailOrUsername
 	user.Password = loginRequest.Password
-	token, err := h.userUsecase.Login(user)
+	token, err := h.userUsecase.Login(&user)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err.Error(),
-		})
+		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "Invalid email, username or password", err, nil)
 	}
 	c.Cookie(&fiber.Cookie{
 		Name:     "token",
-		Value:    token,
+		Value:    *token,
 		Expires:  time.Now().Add(time.Hour * 24 * 3),
 		Secure:   true,
 		SameSite: "None",
 		HTTPOnly: true,
 	})
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "success",
-	})
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
 }
 
 func (h *UserHandler) Me(c *fiber.Ctx) error {
-	user, err := h.userUsecase.Me(c.Locals(Constance.UserID_ctx).(string))
+	userID := c.Locals(Constance.UserID_ctx).(string)
+	user, err := h.userUsecase.Me(&userID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err.Error(),
-		})
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "success",
-		"user":    user,
-	})
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, user)
 }
 
 func (h *UserHandler) Logout(c *fiber.Ctx) error {
@@ -109,42 +86,36 @@ func (h *UserHandler) Logout(c *fiber.Ctx) error {
 		Expires: time.Now().Add(-time.Hour * 24),
 		Value:   "",
 	})
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "success",
-	})
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
 }
 
 func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 	changePasswordRequest := model.ChangePasswordRequest{}
 	if err := c.BodyParser(&changePasswordRequest); err != nil {
-		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
-			"message": "Please fill all the require fields",
-			"error":   err.Error(),
-		})
+		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
 	}
-	user, err := h.userUsecase.ChangePassword(c.Locals(Constance.UserID_ctx).(string), changePasswordRequest)
+	userId := c.Locals(Constance.UserID_ctx).(string)
+	user, err := h.userUsecase.ChangePassword(&userId, &changePasswordRequest)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err.Error(),
-		})
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "success",
-		"user":    user,
-	})
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, user)
+
+}
+
+func (h *UserHandler) GetAll(c *fiber.Ctx) error {
+	users, err := h.userUsecase.GetAll()
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, users)
 }
 
 func (h *UserHandler) Delete(c *fiber.Ctx) error {
 	userID := c.Locals(Constance.UserID_ctx).(string)
-	err := h.userUsecase.Delete(userID)
+	err := h.userUsecase.Delete(&userID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err.Error(),
-		})
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "success",
-	})
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
 }
