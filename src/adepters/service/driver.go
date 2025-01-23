@@ -7,28 +7,21 @@ import (
 )
 
 type ServiceDriver struct {
-    db *gorm.DB
+	db *gorm.DB
 }
 
 func NewServiceDriver(db *gorm.DB) serviceUsecase.ServiceRepository {
-    return &ServiceDriver{
-        db: db,
-    }
+	return &ServiceDriver{
+		db: db,
+	}
 }
 
 // Implement the Insert method to satisfy the ServiceRepository interface
 func (d *ServiceDriver) Insert(service *Entities.Service) error {
-    if err := d.db.Create(service).Error; err != nil {
-        return err
-    }
-    return nil
-}
-
-func (d *ServiceDriver) Create(role *Entities.Service) error {
-    if err := d.db.Create(role).Error; err != nil {
-        return err
-    }
-    return nil
+	if err := d.db.Create(service).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *ServiceDriver) GetAll() (*[]Entities.Service, error) {
@@ -53,13 +46,9 @@ func (d *ServiceDriver) Update(service *Entities.Service) error {
 	return nil
 }
 
-
-
 func (d *ServiceDriver) Delete(id *string) error {
-    if err := d.db.Where("id = ?", id).Delete(&Entities.Service{}).Error; err != nil {
-        return err
-    }
-    return nil
+	if err := d.db.Where("id = ?", id).Delete(&Entities.Service{}).Error; err != nil {
+		return err
+	}
+	return nil
 }
-
-
