@@ -61,10 +61,10 @@ func (d *UserDriver) Delete(id *string) error {
 	return nil
 }
 
-func (d *UserDriver) FindAll() ([]Entities.User, error) {
+func (d *UserDriver) FindAll() (*[]Entities.User, error) {
 	var users []Entities.User
 	if err := d.db.Preload("Role").Find(&users).Error; err != nil {
 		return nil, err
 	}
-	return users, nil
+	return &users, nil
 }

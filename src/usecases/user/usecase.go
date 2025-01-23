@@ -104,7 +104,7 @@ func (s *UserService) GetAll() ([]Entities.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return users, nil
+	return *users, nil
 }
 func (s *UserService) Delete(userId string) error {
 	return s.userRepo.Delete(&userId)
