@@ -111,6 +111,23 @@ func (h *UserHandler) GetAll(c *fiber.Ctx) error {
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, users)
 }
 
+func (h *UserHandler) Update(c *fiber.Ctx) error {
+	var user model.UpdateRequest
+	if err := c.BodyParser(&user); err != nil {
+		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
+	}
+
+	userID, ok := c.Locals(Constance.UserID_ctx).(string)
+	if !ok {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", nil, nil)
+	}
+	user.ID = userID
+	selectUser, err := h.userUsecase.Update(&user)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, selectUser)
+}
 func (h *UserHandler) Delete(c *fiber.Ctx) error {
 	userID := c.Locals(Constance.UserID_ctx).(string)
 	err := h.userUsecase.Delete(&userID)
@@ -118,4 +135,5 @@ func (h *UserHandler) Delete(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
+
 }

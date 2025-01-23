@@ -19,6 +19,7 @@ type UserUsecase interface {
 	ChangePassword(userId *string, password *model.ChangePasswordRequest) (*Entities.User, error)
 	GetAll() (*[]Entities.User, error)
 	Delete(userId *string) error
+	Update(user *model.UpdateRequest) (*Entities.User, error)
 }
 
 // ส่วนที่ต่อกับ driver handler
@@ -94,6 +95,23 @@ func (s *UserService) ChangePassword(userId *string, password *model.ChangePassw
 	return selectUser, nil
 }
 
+func (s *UserService) Update(user *model.UpdateRequest) (*Entities.User, error) {
+	selectUser, err := s.userRepo.FindByID(&user.ID)
+	if err != nil {
+		return nil, err
+	}
+	selectUser.Username = user.Username
+	selectUser.Firstname = user.FirstName
+	selectUser.Lastname = user.LastName
+	selectUser.Email = user.Email
+	selectUser.Role.Role = user.Role
+
+	selectUser, err = s.userRepo.Update(selectUser)
+	if err != nil {
+		return nil, err
+	}
+	return selectUser, nil
+}
 func (s *UserService) GetAll() (*[]Entities.User, error) {
 	users, err := s.userRepo.FindAll()
 	if err != nil {
@@ -101,6 +119,7 @@ func (s *UserService) GetAll() (*[]Entities.User, error) {
 	}
 	return users, nil
 }
+
 func (s *UserService) Delete(userId *string) error {
 	return s.userRepo.Delete(userId)
 }
