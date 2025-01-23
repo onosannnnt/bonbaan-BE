@@ -148,3 +148,17 @@ func (h *UserHandler) GetAll(c *fiber.Ctx) error {
 		"users":   users,
 	})
 }
+
+func (h *UserHandler) Delete(c *fiber.Ctx) error {
+	userID := c.Locals(Constance.UserID_ctx).(string)
+	err := h.userUsecase.Delete(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err.Error(),
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "success",
+	})
+}
