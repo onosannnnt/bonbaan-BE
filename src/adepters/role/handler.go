@@ -25,7 +25,7 @@ func (h *RoleHandler) InsertRole() func(c *fiber.Ctx) error {
 				"error":   err.Error(),
 			})
 		}
-		if err := h.roleUsecase.InsertRole(role); err != nil {
+		if err := h.roleUsecase.InsertRole(&role); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "Internal Server Error",
 				"error":   err.Error(),

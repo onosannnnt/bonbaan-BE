@@ -16,15 +16,15 @@ func NewRoleDriver(db *gorm.DB) roleUsecase.RoleRepository {
 	}
 }
 
-func (d *RoleDriver) Insert(role Entities.Role) error {
-	if err := d.db.Create(&role).Error; err != nil {
+func (d *RoleDriver) Insert(role *Entities.Role) error {
+	if err := d.db.Create(role).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *RoleDriver) GetAll() ([]Entities.Role, error) {
-	var roles []Entities.Role
+func (d *RoleDriver) GetAll() (*[]Entities.Role, error) {
+	var roles *[]Entities.Role
 	if err := d.db.Find(&roles).Error; err != nil {
 		return nil, err
 	}
