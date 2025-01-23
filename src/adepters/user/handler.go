@@ -114,28 +114,19 @@ func (h *UserHandler) GetAll(c *fiber.Ctx) error {
 func (h *UserHandler) Update(c *fiber.Ctx) error {
 	var user model.UpdateRequest
 	if err := c.BodyParser(&user); err != nil {
-		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
-			"message": "Please fill all the require fields",
-			"error":   err.Error(),
-		})
+		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
 	}
 
 	userID, ok := c.Locals(Constance.UserID_ctx).(string)
 	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   "Invalid user ID",
-		})
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", nil, nil)
 	}
 	user.ID = userID
 	selectUser, err := h.userUsecase.Update(&user)
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "success",
-		"user":    selectUser,
-	})
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, selectUser)
 }
 func (h *UserHandler) Delete(c *fiber.Ctx) error {
 	userID := c.Locals(Constance.UserID_ctx).(string)
