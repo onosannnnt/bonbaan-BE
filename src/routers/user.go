@@ -28,4 +28,5 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 	owner.Use(middleware.IsOwner)
 
 	owner.Put("/change-password", userHandler.ChangePassword)
+	owner.Delete("/", userHandler.Delete)
 }

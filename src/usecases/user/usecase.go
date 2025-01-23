@@ -19,6 +19,7 @@ type UserUsecase interface {
 	Me(userId string) (user Entities.User, err error)
 	ChangePassword(userId string, password model.ChangePasswordRequest) (user Entities.User, err error)
 	GetAll() ([]Entities.User, error)
+	Delete(userId string) error
 }
 
 // ส่วนที่ต่อกับ driver handler
@@ -105,5 +106,6 @@ func (s *UserService) GetAll() ([]Entities.User, error) {
 	}
 	return users, nil
 }
-
-// $2a$10$KRQhfyL6fHzC83iCebu.dO0HvLcsHwfpL4gYTJluV7i8eJthI8fva
+func (s *UserService) Delete(userId string) error {
+	return s.userRepo.Delete(&userId)
+}

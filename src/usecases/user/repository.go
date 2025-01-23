@@ -9,4 +9,5 @@ type UserRepository interface {
 	FindByID(id *string) (*Entities.User, error)
 	Update(user Entities.User) (*Entities.User, error)
 	FindAll() ([]Entities.User, error)
+	Delete(id *string) error
 }
