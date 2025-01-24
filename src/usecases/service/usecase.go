@@ -9,7 +9,7 @@ type ServiceUsecase interface {
     GetAll() (*[]Entities.Service, error)
 	GetByID(id *string) (*Entities.Service, error)
 	UpdateService(service *Entities.Service) error
-
+	DeleteService(id *string) error
 
 }
 
@@ -40,3 +40,9 @@ func (sc *ServiceAsService) UpdateService(service *Entities.Service) error {
 	// Implementation of UpdateService method
 	return sc.ServiceRepo.Update(service)
 }
+
+func (sc *ServiceAsService) DeleteService(id *string) error {
+	// Implementation of DeleteService method
+	return sc.ServiceRepo.Delete(id)
+}
+

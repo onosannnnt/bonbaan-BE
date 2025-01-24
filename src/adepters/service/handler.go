@@ -72,3 +72,12 @@ func (h *ServiceHandler) UpdateService(c *fiber.Ctx) error {
 
 	return utils.ResponseJSON(c, fiber.StatusOK, "Service updated successfully", nil, service)
 }
+
+func (h *ServiceHandler) DeleteService(c *fiber.Ctx) error {
+	id := c.Params("id")
+	err := h.ServiceUsecase.DeleteService(&id)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
+}
