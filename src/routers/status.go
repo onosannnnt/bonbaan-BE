@@ -24,7 +24,7 @@ func InitStatusRouter(app *fiber.App, db *gorm.DB) {
 	admin := protected.Group("/admin")
 	admin.Use(middleware.IsAdmin)
 	admin.Post("/", statusHandler.InsertStatus)
-	admin.Put("/", statusHandler.UpdateStatus)
+	admin.Put("/:id", statusHandler.UpdateStatus)
 	admin.Delete("/:id", statusHandler.DeleteStatus)
 
 }

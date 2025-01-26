@@ -17,7 +17,7 @@ type Order struct {
 	CancellationReason string                 `json:"cancellationReason"`
 	Note               string                 `json:"note"`
 	OrderDetail        map[string]interface{} `gorm:"serializer:json;" json:"orderDetail"`
-	Dateline           time.Time              `json:"dateline"`
+	Deadline           time.Time              `json:"deadline"`
 	UserID             uuid.UUID              `json:"userID"`
 	User               User                   `gorm:"foreignKey:UserID;references:ID"`
 	StatusID           uuid.UUID              `json:"statusID"`

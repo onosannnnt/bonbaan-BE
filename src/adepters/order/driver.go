@@ -18,6 +18,14 @@ func NewOrderDriver(db *gorm.DB) orderUsecase.OrderRepository {
 	}
 }
 
+func (d *OrderDriver) GetDefaultStatus() (*Entities.Status, error) {
+	var selectStatus Entities.Status
+	if err := d.db.Where("name = ?", "pending").First(&selectStatus).Error; err != nil {
+		return nil, err
+	}
+	return &selectStatus, nil
+}
+
 func (d *OrderDriver) Insert(order *Entities.Order) error {
 	if err := d.db.Create(order).Error; err != nil {
 		return err
@@ -25,18 +33,18 @@ func (d *OrderDriver) Insert(order *Entities.Order) error {
 	return nil
 }
 
-func (d *OrderDriver) FindAll(page *int, count *int) ([]*Entities.Order, error) {
+func (d *OrderDriver) GetAll() ([]*Entities.Order, error) {
 	var selectOrder []*Entities.Order
 	if err := d.db.Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Omit("password")
 
-	}).Preload("Service").Order("created_at desc").Limit(*count).Find(&selectOrder).Offset(*page).Error; err != nil {
+	}).Preload("Service").Order("created_at desc").Find(&selectOrder).Error; err != nil {
 		return nil, err
 	}
 	return selectOrder, nil
 }
 
-func (d *OrderDriver) FindOne(id *string) (*Entities.Order, error) {
+func (d *OrderDriver) GetByID(id *string) (*Entities.Order, error) {
 	var selectOrder Entities.Order
 	if err := d.db.Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Omit("password")

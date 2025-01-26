@@ -5,8 +5,6 @@ type OrderGetAll struct {
 	Count int
 }
 
-type JSONB map[string]interface{}
-
 type OrderInsertRequest struct {
 	CancellationReason string `json:"cancellationReason"`
 	Note               string `json:"note"`
@@ -14,5 +12,5 @@ type OrderInsertRequest struct {
 	UserID             string `json:"userID"`
 	StatusID           string `json:"statusID"`
 	ServiceID          string `json:"serviceID"`
-	Dateline           string `json:"dateline"`
+	Deadline           string `json:"deadline"`
 }

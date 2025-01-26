@@ -30,16 +30,15 @@ func (h *OrderHandler) Insert(c *fiber.Ctx) error {
 	insertOrder.CancellationReason = order.CancellationReason
 	insertOrder.OrderDetail = model.JSONB(order.OrderDetail)
 	insertOrder.Note = order.Note
-	parsedDate, err := time.Parse("2006-01-02", order.Dateline)
+	parsedDate, err := time.Parse("2006-01-02", order.Deadline)
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid date format", nil, err)
 	}
-	insertOrder.Dateline = time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, time.UTC)
+	insertOrder.Deadline = time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, time.UTC)
 	insertOrder.UserID = uuid.MustParse(order.UserID)
-	insertOrder.StatusID = uuid.MustParse(order.StatusID)
 	insertOrder.ServiceID = uuid.MustParse(order.ServiceID)
 	if err := h.OrderUsecase.Insert(&insertOrder); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to insert order", nil, err)
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to insert order", err, err.Error())
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
 }
@@ -49,14 +48,14 @@ func (h *OrderHandler) GetAll(c *fiber.Ctx) error {
 	if err := c.QueryParser(&config); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse query", nil, err)
 	}
-	order, err := h.OrderUsecase.GetAll(&config.Page, &config.Count)
+	order, err := h.OrderUsecase.GetAll()
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get order", nil, err)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, order)
 }
 
-func (h *OrderHandler) GetOne(c *fiber.Ctx) error {
+func (h *OrderHandler) GetByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 	order, err := h.OrderUsecase.GetOne(&id)
 	if err != nil {

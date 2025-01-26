@@ -2,6 +2,7 @@ package statusAdapter
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	statusUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/status"
 	"github.com/onosannnnt/bonbaan-BE/src/utils"
@@ -63,8 +64,9 @@ func (h *StatusHandler) GetAllStatus(c *fiber.Ctx) error {
 }
 
 func (h *StatusHandler) UpdateStatus(c *fiber.Ctx) error {
+	var id = c.Params("id")
 	var status Entities.Status
-
+	status.ID = uuid.MustParse(id)
 	if err := c.BodyParser(&status); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Please fill all the require fields", err, nil)
 	}
