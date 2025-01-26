@@ -20,8 +20,10 @@ func ServiceRouter(app *fiber.App, db *gorm.DB) {
 
 	protected := ser.Group("/protected")
 	protected.Use(middleware.IsAuth)
+
 	admin := protected.Group("/admin")
 	admin.Use(middleware.IsAdmin)
+
 	admin.Post("/", serviceHandler.CreateService)
 	admin.Patch("/:id", serviceHandler.UpdateService)
 
