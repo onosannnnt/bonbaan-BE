@@ -10,5 +10,4 @@ type ServiceRepository interface {
 	GetByID(id *string) (*Entities.Service, error)
 	Update(service *Entities.Service) error
 	Delete(id *string) error
-	
 }

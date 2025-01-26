@@ -5,35 +5,34 @@ import (
 )
 
 type ServiceUsecase interface {
-    CreateService(service *Entities.Service) error
-    GetAll() (*[]Entities.Service, error)
+	CreateService(service *Entities.Service) error
+	GetAll() (*[]Entities.Service, error)
 	GetByID(id *string) (*Entities.Service, error)
 	UpdateService(service *Entities.Service) error
 	DeleteService(id *string) error
-
 }
 
 type ServiceAsService struct {
-    ServiceRepo ServiceRepository
+	ServiceRepo ServiceRepository
 }
 
 func NewServiceUsecase(repo ServiceRepository) ServiceUsecase {
-    return &ServiceAsService{ServiceRepo: repo}
+	return &ServiceAsService{ServiceRepo: repo}
 }
 
 func (sc *ServiceAsService) CreateService(service *Entities.Service) error {
-    return sc.ServiceRepo.Insert(service)
+	return sc.ServiceRepo.Insert(service)
 }
 
 // Implement the GetAll method to satisfy the ServiceUsecase interface
 func (sc *ServiceAsService) GetAll() (*[]Entities.Service, error) {
-    // Implementation of GetAll method
-    return sc.ServiceRepo.GetAll()
+	// Implementation of GetAll method
+	return sc.ServiceRepo.GetAll()
 }
 
 func (sc *ServiceAsService) GetByID(id *string) (*Entities.Service, error) {
-    // Implementation of GetByID method
-    return sc.ServiceRepo.GetByID(id)
+	// Implementation of GetByID method
+	return sc.ServiceRepo.GetByID(id)
 }
 
 func (sc *ServiceAsService) UpdateService(service *Entities.Service) error {
@@ -45,4 +44,3 @@ func (sc *ServiceAsService) DeleteService(id *string) error {
 	// Implementation of DeleteService method
 	return sc.ServiceRepo.Delete(id)
 }
-
