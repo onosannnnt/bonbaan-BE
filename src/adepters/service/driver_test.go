@@ -22,25 +22,24 @@ import (
 func setupTestDB() *gorm.DB {
 	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
 	if err != nil {
-	  panic(fmt.Sprintf("Failed to open database: %v", err))
+		panic(fmt.Sprintf("Failed to open database: %v", err))
 	}
 	db.AutoMigrate(&Entities.Service{})
 	return db
-  }
+}
 
 func TestServiceDriver_Create(t *testing.T) {
 	db := setupTestDB()
 	driver := NewServiceDriver(db)
 
 	service := &Entities.Service{
-		
+
 		ID:          uuid.New(),
 		Name:        "Test Service",
 		Description: "Test Description",
-		Price:       100,
 		Rate:        5,
 	}
-	
+
 	// Insert the service into the database
 	err := driver.Insert(service)
 	assert.NoError(t, err)
@@ -54,15 +53,14 @@ func TestServiceDriver_Create(t *testing.T) {
 	// Verify that the inserted service matches the expected values
 	assert.Equal(t, service.Name, found.Name)
 	assert.Equal(t, service.Description, found.Description)
-	assert.Equal(t, service.Price, found.Price)
 }
 
 func TestServiceDriver_GetAll(t *testing.T) {
 	db := setupTestDB()
 	driver := NewServiceDriver(db)
 	services := []Entities.Service{
-		{ID: uuid.New(), Name: "Service 1", Description: "Description 1", Price: 100, Rate: 5},
-		{ID: uuid.New(), Name: "Service 2", Description: "Description 2", Price: 200, Rate: 4},
+		{ID: uuid.New(), Name: "Service 1", Description: "Description 1", Rate: 5},
+		{ID: uuid.New(), Name: "Service 2", Description: "Description 2", Rate: 4},
 	}
 	for _, s := range services {
 		err := db.Create(&s).Error
@@ -80,7 +78,6 @@ func TestServiceDriver_GetByID(t *testing.T) {
 		ID:          uuid.New(),
 		Name:        "Test Service2",
 		Description: "Test Description",
-		Price:       100,
 		Rate:        5,
 	}
 	err := db.Create(service).Error
@@ -98,7 +95,6 @@ func TestServiceDriver_Update(t *testing.T) {
 		ID:          uuid.New(),
 		Name:        "Test Service",
 		Description: "Test Description",
-		Price:       100,
 		Rate:        5,
 	}
 	err := db.Create(service).Error
@@ -119,7 +115,6 @@ func TestServiceDriver_Delete(t *testing.T) {
 		ID:          uuid.New(),
 		Name:        "Test Service",
 		Description: "Test Description",
-		Price:       100,
 		Rate:        5,
 	}
 	err := db.Create(service).Error
@@ -131,25 +126,3 @@ func TestServiceDriver_Delete(t *testing.T) {
 	err = db.First(&found, "id = ?", service.ID).Error
 	assert.Equal(t, gorm.ErrRecordNotFound, err)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
