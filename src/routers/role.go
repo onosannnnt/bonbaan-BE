@@ -4,7 +4,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	roleAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/role"
 	roleUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/role"
-
 	"github.com/onosannnnt/bonbaan-BE/src/utils/middleware"
 	"gorm.io/gorm"
 )

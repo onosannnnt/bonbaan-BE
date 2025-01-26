@@ -1,25 +1,13 @@
 package router
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
-
-// type User struct {
-// 	gorm.Model
-// 	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:(uuid_generate_v4())"`
-// 	Username  string    `json:"username" gorm:"unique"`
-// 	Password  string    `json:"password" gorm:"not null"`
-// 	Email     string    `json:"email" gorm:"unique"`
-// 	Firstname string    `json:"firstname"`
-// 	Lastname  string    `json:"lastname"`
-// 	Phone     string    `json:"phone"`
-
-// }
-
 
 func TestInitUserRouter(t *testing.T) {
 	// Setup
@@ -31,25 +19,43 @@ func TestInitUserRouter(t *testing.T) {
 
 	// Verify routes are registered
 	routes := app.GetRoutes()
-
-	// Test /users routes
-	assert.Contains(t, getRoutes(routes), "POST /users/register")
-	assert.Contains(t, getRoutes(routes), "POST /users/login")
-
-	// Test protected routes
-	assert.Contains(t, getRoutes(routes), "GET /users/protected/me")
-	assert.Contains(t, getRoutes(routes), "GET /users/protected")
-	assert.Contains(t, getRoutes(routes), "DELETE /users/protected")
-
-	// Test owner routes
-	assert.Contains(t, getRoutes(routes), "PUT /users/protected/owner/change-password")
-	assert.Contains(t, getRoutes(routes), "PUT /users/protected/owner")
-}
-
-func getRoutes(routes []fiber.Route) []string {
-	var routeStrings []string
-	for _, route := range routes {
-		routeStrings = append(routeStrings, route.Method+" "+route.Path)
+	
+	expectedRoutes := map[string]string{
+		"/users/register":                      "POST",
+		"/users/login":                         "POST",
+		"/users/protected/me":                  "GET",
+		"/users/protected":                     "GET,DELETE",
+		"/users/protected/owner/change-password": "PUT",
+		"/users/protected/owner":               "PUT",
 	}
-	return routeStrings
+	for path, methods := range expectedRoutes {
+		for _, expectedMethod := range strings.Split(methods, ",") {
+			var found bool
+			for _, route := range routes {
+				if route.Path == path && route.Method == expectedMethod {
+					found = true
+					break
+				}
+			}
+			assert.True(t, found, "Expected route %s %s not found", expectedMethod, path)
+		}
+	}
+	// Verify middleware
+	stack := app.Stack()
+	hasAuthMiddleware := false
+	hasOwnerMiddleware := false
+
+	for _, s := range stack {
+		for _, r := range s {
+			if r.Path == "/users/protected" {
+				hasAuthMiddleware = true
+			}
+			if r.Path == "/users/protected/owner" {
+				hasOwnerMiddleware = true 
+			}
+		}
+	}
+
+	assert.True(t, hasAuthMiddleware, "Auth middleware not found")
+	assert.True(t, hasOwnerMiddleware, "Owner middleware not found")
 }
