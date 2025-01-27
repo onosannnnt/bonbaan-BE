@@ -80,6 +80,7 @@ func TestUserDriver_Insert(t *testing.T) {
 }
 
 
+
 // Uncomment and update the following tests as needed
 
 // func TestUserDriver_FindByEmailOrUsername(t *testing.T) {

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/onosannnnt/bonbaan-BE/src/utils"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +12,7 @@ type JSON json.RawMessage
 
 type Order struct {
 	gorm.Model
-	ID                 string                 `gorm:"primaryKey;default:uuid_generate_v4()"`
+	ID                 uuid.UUID                 `gorm:"primaryKey;default:(uuid_generate_v4())"`
 	CancellationReason string                 `json:"cancellationReason"`
 	Note               string                 `json:"note"`
 	OrderDetail        map[string]interface{} `gorm:"serializer:json;" json:"orderDetail"`
@@ -26,9 +25,9 @@ type Order struct {
 	Service            Service                `gorm:"foreignKey:ServiceID;references:ID"`
 }
 
-func (o *Order) BeforeCreate(tx *gorm.DB) (err error) {
-	if o.ID == "" {
-		o.ID, err = utils.GenerateRandomID()
-	}
-	return
-}
+// func (o *Order) BeforeCreate(tx *gorm.DB) (err error) {
+// 	if o.ID == "" {
+// 		o.ID, err = utils.GenerateRandomID()
+// 	}
+// 	return
+// }
