@@ -13,7 +13,7 @@ jobs:
           go-version: "1.22.x"
 
       - name: Copy .env.test file
-        run: cp .env .env
+        run: cp .env.test  .env
 
       - name: Install dependencies
         run: go mod download
