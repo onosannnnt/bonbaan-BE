@@ -18,7 +18,7 @@ func init() {
     // Walk up the directory tree to find the .env file
     var configPath string
     for {
-        configPath = filepath.Join(currentFileDir, ".env.test")
+        configPath = filepath.Join(currentFileDir, ".env")
         if _, err := os.Stat(configPath); !os.IsNotExist(err) {
             break
         }
