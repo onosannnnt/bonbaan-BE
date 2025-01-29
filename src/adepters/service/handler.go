@@ -19,7 +19,7 @@ func NewServiceHandler(ServiceUsecase ServiceUsecase.ServiceUsecase) *ServiceHan
 }
 
 func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
-	service := Entities.Service{}
+	var service Entities.Service
 
 	if err := c.BodyParser(&service); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Please fill all the require fields", err, nil)

@@ -1,7 +1,0 @@
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=mayoi
-DB_PASSWORD=Puchit4826@_@
-DB_SCHEMA=mayoi
-PORT = 3000
-JWT_SECRET=  Puchit4826@_@
