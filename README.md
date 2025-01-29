@@ -51,5 +51,5 @@ We use GitHub Actions for continuous integration. The workflow is defined in `.g
 5. Submit a pull request
 
 ## License
-
+.
 [MIT License](LICENSE)
