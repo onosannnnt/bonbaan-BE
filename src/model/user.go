@@ -1,5 +1,7 @@
 package model
 
+import "github.com/google/uuid"
+
 type ChangePasswordRequest struct {
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
@@ -13,4 +15,15 @@ type UpdateRequest struct {
 	Email     string `json:"email"`
 	Role      string `json:"role"`
 	Phone     string `json:"phone"`
+}
+
+type VerifyUserRequest struct {
+	Email     string    `json:"email"`
+	Username  string    `json:"username"`
+	Password  string    `json:"password"`
+	Firstname string    `json:"firstname"`
+	Lastname  string    `json:"lastname"`
+	Phone     string    `json:"phone"`
+	RoleID    uuid.UUID `json:"role_id"`
+	Code      string    `json:"code"`
 }

@@ -28,3 +28,13 @@ func GenerateRandomID() (string, error) {
 
 	return id, nil
 }
+
+func GenerateOTP(length int) (string, error) {
+	const digits = "0123456789"
+	otp := ""
+	for i := 0; i < length; i++ {
+		randomNumber := rand.Intn(9) + 1
+		otp += string(digits[randomNumber])
+	}
+	return otp, nil
+}

@@ -11,3 +11,9 @@ type UserRepository interface {
 	FindAll() (*[]Entities.User, error)
 	Delete(id *string) error
 }
+
+type OtpRepository interface {
+	Insert(otp *Entities.Otp) error
+	GetByEmail(email *string, otp *string) (*Entities.Otp, error)
+	DeleteByEmail(email *string) error
+}
