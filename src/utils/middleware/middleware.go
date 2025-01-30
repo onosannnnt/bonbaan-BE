@@ -14,7 +14,7 @@ func IsAuth(c *fiber.Ctx) error {
 		SigningKey: jwtware.SigningKey{Key: []byte(Config.JwtSecret)},
 		ContextKey: "jwt",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			return utils.ResponseJSON(c, fiber.StatusUnauthorized, "Unauthorized", err, nil)
+			return utils.ResponseJSON(c, fiber.StatusForbidden, "Unauthorized", err, nil)
 		},
 	})
 	authHeader := c.Get("Authorization")
@@ -40,24 +40,15 @@ func IsAdmin(c *fiber.Ctx) error {
 	if !ok && role != Constance.Admin_Role_ctx {
 		return utils.ResponseJSON(c, fiber.StatusForbidden, "Forbidden", nil, nil)
 	}
-
 	return c.Next()
-}
-
-type Owner struct {
-	UserId string `json:"owner"`
 }
 
 // on implementation. I did sure this should be work. if it work, it work. if is not, read this again
 func IsOwner(c *fiber.Ctx) error {
-	var owner Owner
-	if err := c.BodyParser(&owner); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusForbidden, "Forbidden", err, nil)
-	}
+	owner := c.Get("UserID")
 	userID, ok := c.Locals(Constance.UserID_ctx).(string)
-	if !ok && userID != owner.UserId {
-		utils.ResponseJSON(c, fiber.StatusForbidden, "Forbidden", nil, nil)
+	if !ok || userID != owner {
+		return utils.ResponseJSON(c, fiber.StatusForbidden, "Forbidden", nil, nil)
 	}
-
 	return c.Next()
 }
