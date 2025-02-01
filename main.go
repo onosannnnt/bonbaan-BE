@@ -42,7 +42,7 @@ func main() {
 	router.InitStatusRouter(app, db)
 	router.InitOrderRouter(app, db)
 	router.ServiceRouter(app, db)
-
+	router.InitPresetRouter(app, db)
 	app.Listen(":" + Config.Port)
 }
 

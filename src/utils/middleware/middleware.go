@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"fmt"
+
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -18,12 +20,15 @@ func IsAuth(c *fiber.Ctx) error {
 		},
 	})
 	authHeader := c.Get("Authorization")
+	fmt.Println(authHeader)
 	if authHeader != "" {
 		authHeader = authHeader[len("Bearer "):]
 	}
 	token, err := jwt.ParseWithClaims(authHeader, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(Config.JwtSecret), nil
 	})
+	
+	fmt.Println(token)
 	if err != nil || !token.Valid {
 		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "Unauthorized", err, nil)
 	}
@@ -37,6 +42,7 @@ func IsAuth(c *fiber.Ctx) error {
 
 func IsAdmin(c *fiber.Ctx) error {
 	role, ok := c.Locals(Constance.Role_ctx).(string)
+
 	if !ok && role != Constance.Admin_Role_ctx {
 		return utils.ResponseJSON(c, fiber.StatusForbidden, "Forbidden", nil, nil)
 	}
