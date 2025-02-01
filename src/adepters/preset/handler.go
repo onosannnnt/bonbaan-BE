@@ -1,8 +1,6 @@
 package presetAdapter
 
 import (
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
@@ -22,7 +20,6 @@ func NewPresetHandler(PresetUsecase presetUsecase.PresetUsecase) *PresetHandler 
 
 func (h *PresetHandler) CreatePreset(c *fiber.Ctx) error {
 	preset := Entities.Preset{}
-	fmt.Println("preset", preset)
 	if err := c.BodyParser(&preset); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Please fill all the require fields", err, nil)
 	}
