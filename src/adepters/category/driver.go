@@ -1,8 +1,6 @@
 package categoryAdapter
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	categoryUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/category"
@@ -40,11 +38,11 @@ func (d *Categorydriver) AddServiceToCategory(categoryID *string, serviceID *str
 
     Service_Category.CategoryID = catID
     Service_Category.ServiceID = servID
-	fmt.Println(Service_Category) // Debugging line to print the Service_Category struct
-	fmt.Println("Service_Category.CategoryID:", Service_Category.CategoryID)
-	fmt.Println("Service_Category.ServiceID:", Service_Category.ServiceID)
-	fmt.Println("Type of ervice_Category.CategoryID", fmt.Sprintf("%T", Service_Category.CategoryID))
-	fmt.Println("Type of Service_Category.ServiceID", fmt.Sprintf("%T", Service_Category.ServiceID))
+	// fmt.Println(Service_Category) // Debugging line to print the Service_Category struct
+	// fmt.Println("Service_Category.CategoryID:", Service_Category.CategoryID)
+	// fmt.Println("Service_Category.ServiceID:", Service_Category.ServiceID)
+	// fmt.Println("Type of ervice_Category.CategoryID", fmt.Sprintf("%T", Service_Category.CategoryID))
+	// fmt.Println("Type of Service_Category.ServiceID", fmt.Sprintf("%T", Service_Category.ServiceID))
 
 
     if err := d.db.Create(&Service_Category).Error; err != nil {
@@ -64,7 +62,7 @@ func (d *Categorydriver) RemoveServiceFromCategory(categoryID *string, serviceID
 	if err != nil {
 		return err
 	}
-	fmt.Println(catID, servID) // Debugging line to print the Service_Category struct
+	// fmt.Println(catID, servID) // Debugging line to print the Service_Category struct
 
 	if err := d.db.Delete(&Entities.Service_Category{},"category_id = ? AND service_id = ?", catID, servID).Error; err != nil {
 		return err
