@@ -43,6 +43,7 @@ func main() {
 	router.InitOrderRouter(app, db)
 	router.ServiceRouter(app, db)
 	router.InitPresetRouter(app, db)
+	router.InitCategoryRouter(app, db)
 	app.Listen(":" + Config.Port)
 }
 
