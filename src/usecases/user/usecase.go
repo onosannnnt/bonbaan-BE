@@ -95,7 +95,7 @@ func (s *UserService) Register(user *model.VerifyUserRequest) error {
 }
 
 func (s *UserService) Login(user *Entities.User) (*string, error) {
-	selectUser, err := s.userRepo.FindByEmailOrUsername(user)
+	selectUser, err := s.userRepo.GetByEmailOrUsername(user)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func (s *UserService) Login(user *Entities.User) (*string, error) {
 }
 
 func (s *UserService) Me(userId *string) (*Entities.User, error) {
-	selectUser, err := s.userRepo.FindByID(userId)
+	selectUser, err := s.userRepo.GetByID(userId)
 	if err != nil {
 		return &Entities.User{}, err
 	}
@@ -127,7 +127,7 @@ func (s *UserService) Me(userId *string) (*Entities.User, error) {
 }
 
 func (s *UserService) ChangePassword(userId *string, password *model.ChangePasswordRequest) (*Entities.User, error) {
-	selectUser, err := s.userRepo.FindByID(userId)
+	selectUser, err := s.userRepo.GetByID(userId)
 	if err != nil {
 		return &Entities.User{}, err
 	}
@@ -181,7 +181,7 @@ func (s *UserService) ResetPassword(token *string, password *model.ChangePasswor
 	if err != nil {
 		return nil, err
 	}
-	selectUser, err := s.userRepo.FindByEmailOrUsername(&Entities.User{Email: resetPassword.Email})
+	selectUser, err := s.userRepo.GetByEmailOrUsername(&Entities.User{Email: resetPassword.Email})
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +202,7 @@ func (s *UserService) ResetPassword(token *string, password *model.ChangePasswor
 }
 
 func (s *UserService) Update(user *model.UpdateRequest) (*Entities.User, error) {
-	selectUser, err := s.userRepo.FindByID(&user.ID)
+	selectUser, err := s.userRepo.GetByID(&user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +218,7 @@ func (s *UserService) Update(user *model.UpdateRequest) (*Entities.User, error) 
 	return selectUser, nil
 }
 func (s *UserService) GetAll() (*[]Entities.User, error) {
-	users, err := s.userRepo.FindAll()
+	users, err := s.userRepo.GetAll()
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +226,7 @@ func (s *UserService) GetAll() (*[]Entities.User, error) {
 }
 
 func (s *UserService) GetByID(userId *string) (*Entities.User, error) {
-	user, err := s.userRepo.FindByID(userId)
+	user, err := s.userRepo.GetByID(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (s *UserService) GetByID(userId *string) (*Entities.User, error) {
 }
 
 func (s *UserService) GetByEmailOrUsername(user *Entities.User) (*Entities.User, error) {
-	selectUser, err := s.userRepo.FindByEmailOrUsername(user)
+	selectUser, err := s.userRepo.GetByEmailOrUsername(user)
 	if err != nil {
 		return nil, err
 	}

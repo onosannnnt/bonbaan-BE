@@ -5,10 +5,10 @@ import Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 // ส่วนที่กำหนดการทำงานของ repository
 type UserRepository interface {
 	Insert(user *Entities.User) error
-	FindByEmailOrUsername(user *Entities.User) (*Entities.User, error)
-	FindByID(id *string) (*Entities.User, error)
+	GetByEmailOrUsername(user *Entities.User) (*Entities.User, error)
+	GetByID(id *string) (*Entities.User, error)
 	Update(user *Entities.User) (*Entities.User, error)
-	FindAll() (*[]Entities.User, error)
+	GetAll() (*[]Entities.User, error)
 	Delete(id *string) error
 }
 

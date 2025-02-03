@@ -31,7 +31,7 @@ func (d *UserDriver) Insert(user *Entities.User) error {
 	return nil
 }
 
-func (d *UserDriver) FindByEmailOrUsername(user *Entities.User) (*Entities.User, error) {
+func (d *UserDriver) GetByEmailOrUsername(user *Entities.User) (*Entities.User, error) {
 	var selectUser Entities.User
 	if err := d.db.Preload("Role").Where("email = ? OR username = ?", user.Email, user.Username).First(&selectUser).Error; err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (d *UserDriver) FindByEmailOrUsername(user *Entities.User) (*Entities.User,
 	return &selectUser, nil
 }
 
-func (d *UserDriver) FindByID(id *string) (*Entities.User, error) {
+func (d *UserDriver) GetByID(id *string) (*Entities.User, error) {
 	var selectUser Entities.User
 	if err := d.db.Where("id = ?", id).First(&selectUser).Error; err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (d *UserDriver) Delete(id *string) error {
 	return nil
 }
 
-func (d *UserDriver) FindAll() (*[]Entities.User, error) {
+func (d *UserDriver) GetAll() (*[]Entities.User, error) {
 	var users []Entities.User
 	if err := d.db.Preload("Role").Find(&users).Error; err != nil {
 		return nil, err
