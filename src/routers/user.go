@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	// "github.com/onosannnnt/bonbaan-BE/src/Config"
 	otpDriver "github.com/onosannnnt/bonbaan-BE/src/adepters/otp"
+	resetpasswordDriver "github.com/onosannnnt/bonbaan-BE/src/adepters/reset_password.go"
 	userAdepter "github.com/onosannnnt/bonbaan-BE/src/adepters/user"
 	userUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/user"
 	"github.com/onosannnnt/bonbaan-BE/src/utils/middleware"
@@ -15,13 +16,16 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 
 	userRepo := userAdepter.NewUserDriver(db)
 	otpRepo := otpDriver.NewOtpDriver(db)
-	userUsecase := userUsecase.NewUserService(userRepo, otpRepo)
+	resetPasswordRepo := resetpasswordDriver.NewOtpDriver(db)
+	userUsecase := userUsecase.NewUserService(userRepo, otpRepo, resetPasswordRepo)
 	userHandler := userAdepter.NewUserHandler(userUsecase)
 
 	user := app.Group("/users")
 	user.Post("/send-otp", userHandler.SendOTP)
 	user.Post("/register", userHandler.Register())
 	user.Post("/login", userHandler.Login)
+	user.Post("/send-reset-password", userHandler.SendResetPassword)
+	user.Post("/reset-password/:token", userHandler.ResetPassword)
 
 	protect := user.Group("/protected")
 	protect.Use(middleware.IsAuth)

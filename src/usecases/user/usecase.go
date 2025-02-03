@@ -22,6 +22,8 @@ type UserUsecase interface {
 	Login(user *Entities.User) (token *string, err error)
 	Me(userId *string) (user *Entities.User, err error)
 	ChangePassword(userId *string, password *model.ChangePasswordRequest) (*Entities.User, error)
+	InsertResetPassword(user *Entities.User) error
+	ResetPassword(token *string, password *model.ChangePasswordRequest) (*Entities.User, error)
 	GetAll() (*[]Entities.User, error)
 	GetByID(userId *string) (*Entities.User, error)
 	GetByEmailOrUsername(user *Entities.User) (*Entities.User, error)
@@ -31,15 +33,17 @@ type UserUsecase interface {
 
 // ส่วนที่ต่อกับ driver handler
 type UserService struct {
-	userRepo UserRepository
-	otpRepo  OtpRepository
+	userRepo          UserRepository
+	otpRepo           OtpRepository
+	resetPasswordRepo ResetPasswordRepository
 }
 
 // สร้าง instance ของ UserService
-func NewUserService(userRepo UserRepository, otpRepo OtpRepository) UserUsecase {
+func NewUserService(userRepo UserRepository, otpRepo OtpRepository, resetPasswordRepo ResetPasswordRepository) UserUsecase {
 	return &UserService{
-		userRepo: userRepo,
-		otpRepo:  otpRepo,
+		userRepo:          userRepo,
+		otpRepo:           otpRepo,
+		resetPasswordRepo: resetPasswordRepo,
 	}
 }
 
@@ -50,8 +54,7 @@ func (s *UserService) InsertOTP(user *Entities.User) error {
 		Otp: func() string {
 			otp, err := utils.GenerateOTP(6)
 			if err != nil {
-				// handle error appropriately, for now just panic
-				panic(err)
+				return err.Error()
 			}
 			return otp
 		}(),
@@ -143,6 +146,61 @@ func (s *UserService) ChangePassword(userId *string, password *model.ChangePassw
 	return selectUser, nil
 }
 
+func (s *UserService) InsertResetPassword(user *Entities.User) error {
+	s.resetPasswordRepo.DeleteByEmail(&user.Email)
+	resetPassword := &Entities.ResetPassword{
+		Email: user.Email,
+		ResetPassword: func() string {
+			token, err := utils.GenerateToken(32)
+			if err != nil {
+				return ""
+			}
+			return token
+		}(),
+		Expired: time.Now().Add(time.Minute * 5),
+	}
+	text := fmt.Sprintf("<body><h1>Here is your reset password http://localhost:5173/forget-password/%s</h1></body>", resetPassword.ResetPassword)
+	m := gomail.NewMessage()
+	m.SetHeader("From", "bonbaanofficial@gmail.com")
+	m.SetHeader("To", user.Email)
+	m.SetHeader("Subject", "One-time password!")
+	m.SetBody("text/html", text)
+	utils.SendingMail(m)
+	return s.resetPasswordRepo.Insert(resetPassword)
+}
+
+func (s *UserService) ResetPassword(token *string, password *model.ChangePasswordRequest) (*Entities.User, error) {
+	resetPassword, err := s.resetPasswordRepo.GetByToken(token)
+	if err != nil {
+		return nil, err
+	}
+	if time.Now().After(resetPassword.Expired) {
+		return nil, errors.New("reset password is expired")
+	}
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	selectUser, err := s.userRepo.FindByEmailOrUsername(&Entities.User{Email: resetPassword.Email})
+	if err != nil {
+		return nil, err
+	}
+	selectUser.Password = string(hashPassword)
+	s.resetPasswordRepo.DeleteByEmail(&resetPassword.Email)
+	selectUser, err = s.userRepo.Update(selectUser)
+	if err != nil {
+		return nil, err
+	}
+	text := fmt.Sprintf("<body><h1>Your password has been changed</h1></body>")
+	m := gomail.NewMessage()
+	m.SetHeader("From", "bonbaanofficial@gmail.com")
+	m.SetHeader("To", selectUser.Email)
+	m.SetHeader("Subject", "One-time password!")
+	m.SetBody("text/html", text)
+	utils.SendingMail(m)
+	return selectUser, nil
+}
+
 func (s *UserService) Update(user *model.UpdateRequest) (*Entities.User, error) {
 	selectUser, err := s.userRepo.FindByID(&user.ID)
 	if err != nil {
@@ -153,7 +211,6 @@ func (s *UserService) Update(user *model.UpdateRequest) (*Entities.User, error) 
 	selectUser.Lastname = user.LastName
 	selectUser.Email = user.Email
 	selectUser.Role.Role = user.Role
-
 	selectUser, err = s.userRepo.Update(selectUser)
 	if err != nil {
 		return nil, err

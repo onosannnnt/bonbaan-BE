@@ -101,7 +101,30 @@ func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, user)
+}
 
+func (h *UserHandler) SendResetPassword(c *fiber.Ctx) error {
+	user := Entities.User{}
+	if err := c.BodyParser(&user); err != nil {
+		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
+	}
+	if err := h.userUsecase.InsertResetPassword(&user); err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
+}
+
+func (h *UserHandler) ResetPassword(c *fiber.Ctx) error {
+	resetPasswordRequest := model.ChangePasswordRequest{}
+	token := c.Params("token")
+	if err := c.BodyParser(&resetPasswordRequest); err != nil {
+		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
+	}
+	user, err := h.userUsecase.ResetPassword(&token, &resetPasswordRequest)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, user)
 }
 
 func (h *UserHandler) GetAll(c *fiber.Ctx) error {

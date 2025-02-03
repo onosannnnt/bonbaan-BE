@@ -17,3 +17,9 @@ type OtpRepository interface {
 	GetByEmail(email *string, otp *string) (*Entities.Otp, error)
 	DeleteByEmail(email *string) error
 }
+
+type ResetPasswordRepository interface {
+	Insert(resetPassword *Entities.ResetPassword) error
+	GetByToken(token *string) (*Entities.ResetPassword, error)
+	DeleteByEmail(email *string) error
+}
