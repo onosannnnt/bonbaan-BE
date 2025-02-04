@@ -31,10 +31,20 @@ func GenerateRandomID() (string, error) {
 
 func GenerateOTP(length int) (string, error) {
 	const digits = "0123456789"
-	otp := ""
+	rand.Seed(time.Now().UnixNano())
+	var result string
 	for i := 0; i < length; i++ {
-		randomNumber := rand.Intn(9) + 1
-		otp += string(digits[randomNumber])
+		result += string(digits[rand.Intn(len(digits))])
 	}
-	return otp, nil
+
+	regexPattern := fmt.Sprintf(`^\d{%d}$`, length)
+	matched, err := regexp.MatchString(regexPattern, result)
+	if err != nil {
+		return "", err
+	}
+	if !matched {
+		return "", fmt.Errorf("generated ID does not match the required format")
+	}
+
+	return result, nil
 }

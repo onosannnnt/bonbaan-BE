@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	// "github.com/onosannnnt/bonbaan-BE/src/Config"
 	otpDriver "github.com/onosannnnt/bonbaan-BE/src/adepters/otp"
-	resetpasswordDriver "github.com/onosannnnt/bonbaan-BE/src/adepters/reset_password.go"
+	resetpasswordDriver "github.com/onosannnnt/bonbaan-BE/src/adepters/reset_password"
 	userAdepter "github.com/onosannnnt/bonbaan-BE/src/adepters/user"
 	userUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/user"
 	"github.com/onosannnnt/bonbaan-BE/src/utils/middleware"
@@ -24,7 +24,7 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 	user.Post("/send-otp", userHandler.SendOTP)
 	user.Post("/register", userHandler.Register())
 	user.Post("/login", userHandler.Login)
-	user.Post("/send-reset-password", userHandler.SendResetPassword)
+	user.Post("/send-reset-password", userHandler.SendResetPasswordMail)
 	user.Post("/reset-password/", userHandler.ResetPassword)
 
 	protect := user.Group("/")

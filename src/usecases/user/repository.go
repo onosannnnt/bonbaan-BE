@@ -14,12 +14,12 @@ type UserRepository interface {
 
 type OtpRepository interface {
 	Insert(otp *Entities.Otp) error
-	GetByEmail(email *string, otp *string) (*Entities.Otp, error)
+	GetByEmail(id *string, otp *string) (*Entities.Otp, error)
 	DeleteByEmail(email *string) error
 }
 
 type ResetPasswordRepository interface {
 	Insert(resetPassword *Entities.ResetPassword) error
-	GetByToken(token *string) (*Entities.ResetPassword, error)
-	DeleteByEmail(email *string) error
+	GetByToken(id *string, token *string) (*Entities.ResetPassword, error)
+	DeleteByID(id *string) error
 }

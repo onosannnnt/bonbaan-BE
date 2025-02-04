@@ -18,11 +18,11 @@ import (
 // ส่วนที่ต่อกับ input handler
 type UserUsecase interface {
 	InsertOTP(user *Entities.User) error
-	Register(user *model.VerifyUserRequest) error
+	Register(user *model.CreateUserRequest) error
 	Login(user *Entities.User) (token *string, err error)
 	Me(userId *string) (user *Entities.User, err error)
 	ChangePassword(userId *string, password *model.ChangePasswordRequest) (*Entities.User, error)
-	InsertResetPassword(user *Entities.User) error
+	SendResetPasswordMail(user *Entities.User) error
 	ResetPassword(password *model.ResetPasswordRequest) (*Entities.User, error)
 	GetAll() (*[]Entities.User, error)
 	GetByID(userId *string) (*Entities.User, error)
@@ -71,7 +71,7 @@ func (s *UserService) InsertOTP(user *Entities.User) error {
 }
 
 // ส่วนของการทำงานของ UserService
-func (s *UserService) Register(user *model.VerifyUserRequest) error {
+func (s *UserService) Register(user *model.CreateUserRequest) error {
 	otpEntity, err := s.otpRepo.GetByEmail(&user.Email, &user.Code)
 	if err != nil {
 		return err
@@ -146,10 +146,15 @@ func (s *UserService) ChangePassword(userId *string, password *model.ChangePassw
 	return selectUser, nil
 }
 
-func (s *UserService) InsertResetPassword(user *Entities.User) error {
-	s.resetPasswordRepo.DeleteByEmail(&user.Email)
+func (s *UserService) SendResetPasswordMail(user *Entities.User) error {
+	selectUser, err := s.userRepo.GetByEmailOrUsername(user)
+	idStr := selectUser.ID.String()
+	s.resetPasswordRepo.DeleteByID(&idStr)
+	if err != nil {
+		return err
+	}
 	resetPassword := &Entities.ResetPassword{
-		Email: user.Email,
+		UserID: selectUser.ID,
 		ResetPassword: func() string {
 			token, err := utils.GenerateOTP(6)
 			if err != nil {
@@ -170,12 +175,19 @@ func (s *UserService) InsertResetPassword(user *Entities.User) error {
 }
 
 func (s *UserService) ResetPassword(password *model.ResetPasswordRequest) (*Entities.User, error) {
-	resetPassword, err := s.resetPasswordRepo.GetByToken(&password.Code)
+	selectUser, err := s.userRepo.GetByEmailOrUsername(&Entities.User{Email: password.Email})
 	if err != nil {
 		return nil, err
 	}
-	for password.Email != resetPassword.Email {
-		resetPassword, err = s.resetPasswordRepo.GetByToken(&password.Code)
+	idStr := selectUser.ID.String()
+	resetPassword, err := s.resetPasswordRepo.GetByToken(&idStr, &password.Code)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(resetPassword.User.Email)
+	for password.Email != resetPassword.User.Email {
+		idStr := selectUser.ID.String()
+		resetPassword, err = s.resetPasswordRepo.GetByToken(&idStr, &password.Code)
 		if err != nil {
 			return nil, err
 		}
@@ -187,12 +199,8 @@ func (s *UserService) ResetPassword(password *model.ResetPasswordRequest) (*Enti
 	if err != nil {
 		return nil, err
 	}
-	selectUser, err := s.userRepo.GetByEmailOrUsername(&Entities.User{Email: resetPassword.Email})
-	if err != nil {
-		return nil, err
-	}
 	selectUser.Password = string(hashPassword)
-	s.resetPasswordRepo.DeleteByEmail(&resetPassword.Email)
+	s.resetPasswordRepo.DeleteByID(&idStr)
 	selectUser, err = s.userRepo.Update(selectUser)
 	if err != nil {
 		return nil, err

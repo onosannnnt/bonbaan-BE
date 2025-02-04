@@ -34,7 +34,7 @@ func (h *UserHandler) SendOTP(c *fiber.Ctx) error {
 // UserHandler function
 func (h *UserHandler) Register() func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		user := model.VerifyUserRequest{}
+		user := model.CreateUserRequest{}
 		if err := c.BodyParser(&user); err != nil {
 			return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
 		}
@@ -103,12 +103,12 @@ func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, user)
 }
 
-func (h *UserHandler) SendResetPassword(c *fiber.Ctx) error {
+func (h *UserHandler) SendResetPasswordMail(c *fiber.Ctx) error {
 	user := Entities.User{}
 	if err := c.BodyParser(&user); err != nil {
 		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
 	}
-	if err := h.userUsecase.InsertResetPassword(&user); err != nil {
+	if err := h.userUsecase.SendResetPasswordMail(&user); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
