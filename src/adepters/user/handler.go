@@ -115,12 +115,11 @@ func (h *UserHandler) SendResetPassword(c *fiber.Ctx) error {
 }
 
 func (h *UserHandler) ResetPassword(c *fiber.Ctx) error {
-	resetPasswordRequest := model.ChangePasswordRequest{}
-	token := c.Params("token")
+	resetPasswordRequest := model.ResetPasswordRequest{}
 	if err := c.BodyParser(&resetPasswordRequest); err != nil {
 		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
 	}
-	user, err := h.userUsecase.ResetPassword(&token, &resetPasswordRequest)
+	user, err := h.userUsecase.ResetPassword(&resetPasswordRequest)
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}

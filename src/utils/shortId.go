@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"regexp"
@@ -38,12 +37,4 @@ func GenerateOTP(length int) (string, error) {
 		otp += string(digits[randomNumber])
 	}
 	return otp, nil
-}
-
-func GenerateToken(length int) (string, error) {
-	bytes := make([]byte, length)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(bytes), nil
 }

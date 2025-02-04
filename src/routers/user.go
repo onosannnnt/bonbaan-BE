@@ -25,9 +25,9 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 	user.Post("/register", userHandler.Register())
 	user.Post("/login", userHandler.Login)
 	user.Post("/send-reset-password", userHandler.SendResetPassword)
-	user.Post("/reset-password/:token", userHandler.ResetPassword)
+	user.Post("/reset-password/", userHandler.ResetPassword)
 
-	protect := user.Group("/protected")
+	protect := user.Group("/")
 	protect.Use(middleware.IsAuth)
 	protect.Get("/me", userHandler.Me)
 	protect.Get("/", userHandler.GetAll)
@@ -35,10 +35,10 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 	protect.Get("/email-or-username/:emailOrUsername", userHandler.GetByEmailOrUsername)
 	protect.Delete("/", userHandler.Delete)
 
-	owner := protect.Group("/owner")
+	owner := protect.Group("/")
 	owner.Use(middleware.IsOwner)
 
-	owner.Put("/change-password", userHandler.ChangePassword)
-	owner.Put("/", userHandler.Update)
+	owner.Patch("/", userHandler.ChangePassword)
+	owner.Patch("/", userHandler.Update)
 
 }

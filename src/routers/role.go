@@ -16,14 +16,11 @@ func InitRoleRouter(app *fiber.App, db *gorm.DB) {
 
 	role := app.Group("/roles")
 	role.Get("/", roleHandler.GetAll())
-	
-	role.Post("/", roleHandler.InsertRole())
 
-	protected := role.Group("/protected")
+	protected := role.Group("/")
 	protected.Use(middleware.IsAuth)
 
-	admin := protected.Group("/admin")
+	admin := protected.Group("/")
 	admin.Use(middleware.IsAdmin)
-
 	admin.Post("/", roleHandler.InsertRole())
 }

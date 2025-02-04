@@ -7,6 +7,12 @@ type ChangePasswordRequest struct {
 	NewPassword string `json:"new_password"`
 }
 
+type ResetPasswordRequest struct {
+	Code     string `json:"code"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type UpdateRequest struct {
 	ID        string `json:"id"`
 	Username  string `json:"username"`

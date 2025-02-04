@@ -17,7 +17,7 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	order.Post("/", orderHandler.Insert)
 	order.Get("/", orderHandler.GetAll)
 	order.Get("/:id", orderHandler.GetByID)
-	order.Put("/:id", orderHandler.Update)
+	order.Patch("/:id", orderHandler.Update)
 	order.Delete("/:id", orderHandler.Delete)
 
 }

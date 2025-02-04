@@ -23,7 +23,7 @@ type UserUsecase interface {
 	Me(userId *string) (user *Entities.User, err error)
 	ChangePassword(userId *string, password *model.ChangePasswordRequest) (*Entities.User, error)
 	InsertResetPassword(user *Entities.User) error
-	ResetPassword(token *string, password *model.ChangePasswordRequest) (*Entities.User, error)
+	ResetPassword(password *model.ResetPasswordRequest) (*Entities.User, error)
 	GetAll() (*[]Entities.User, error)
 	GetByID(userId *string) (*Entities.User, error)
 	GetByEmailOrUsername(user *Entities.User) (*Entities.User, error)
@@ -151,7 +151,7 @@ func (s *UserService) InsertResetPassword(user *Entities.User) error {
 	resetPassword := &Entities.ResetPassword{
 		Email: user.Email,
 		ResetPassword: func() string {
-			token, err := utils.GenerateToken(32)
+			token, err := utils.GenerateOTP(6)
 			if err != nil {
 				return ""
 			}
@@ -159,7 +159,7 @@ func (s *UserService) InsertResetPassword(user *Entities.User) error {
 		}(),
 		Expired: time.Now().Add(time.Minute * 5),
 	}
-	text := fmt.Sprintf("<body><h1>Here is your reset password http://localhost:5173/forget-password/%s</h1></body>", resetPassword.ResetPassword)
+	text := fmt.Sprintf("<body><h1>Here is your password reset Code <b>%s<b></h1></body>", resetPassword.ResetPassword)
 	m := gomail.NewMessage()
 	m.SetHeader("From", "bonbaanofficial@gmail.com")
 	m.SetHeader("To", user.Email)
@@ -169,15 +169,21 @@ func (s *UserService) InsertResetPassword(user *Entities.User) error {
 	return s.resetPasswordRepo.Insert(resetPassword)
 }
 
-func (s *UserService) ResetPassword(token *string, password *model.ChangePasswordRequest) (*Entities.User, error) {
-	resetPassword, err := s.resetPasswordRepo.GetByToken(token)
+func (s *UserService) ResetPassword(password *model.ResetPasswordRequest) (*Entities.User, error) {
+	resetPassword, err := s.resetPasswordRepo.GetByToken(&password.Code)
 	if err != nil {
 		return nil, err
+	}
+	for password.Email != resetPassword.Email {
+		resetPassword, err = s.resetPasswordRepo.GetByToken(&password.Code)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if time.Now().After(resetPassword.Expired) {
 		return nil, errors.New("reset password is expired")
 	}
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password.NewPassword), bcrypt.DefaultCost)
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +197,7 @@ func (s *UserService) ResetPassword(token *string, password *model.ChangePasswor
 	if err != nil {
 		return nil, err
 	}
-	text := fmt.Sprintf("<body><h1>Your password has been changed</h1></body>")
+	text := "<body><h1>Your password has been changed</h1></body>"
 	m := gomail.NewMessage()
 	m.SetHeader("From", "bonbaanofficial@gmail.com")
 	m.SetHeader("To", selectUser.Email)
