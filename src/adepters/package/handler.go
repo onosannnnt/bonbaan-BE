@@ -21,7 +21,7 @@ func NewPackageHandler(PackageUsecase packageUsecase.PackageUsecase) *PackageHan
 func (h *PackageHandler) CreatePackage(c *fiber.Ctx) error {
 	packages := Entities.Package{}
 	if err := c.BodyParser(&packages); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Please fill all the require fields", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusBadRequest,"Invalid request body", err, nil)
 	}
 
 	if err := h.PackageUsecase.CreatePackage(&packages); err != nil {
@@ -71,16 +71,16 @@ func (h *PackageHandler) UpdatePackage(c *fiber.Ctx) error {
 	// Convert the id to uuid.UUID
 	uuidID, err := uuid.Parse(id)
 	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid request body", err, nil)
 	}
 
 	packages.ID = uuidID // Ensure the ID is set to the one from the URL
 
 	if err := h.PackageUsecase.UpdatePackage(&packages); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to update service", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
 
-	return utils.ResponseJSON(c, fiber.StatusOK, "Service updated successfully", nil, packages)
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, packages)
 }
 
 func (h *PackageHandler) DeletePackage(c *fiber.Ctx) error {

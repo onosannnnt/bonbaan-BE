@@ -24,7 +24,7 @@ func (h *Handler) CreateCategory(c *fiber.Ctx) error {
 	}
 
 	if err := h.usecase.CreateCategory(&category); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to create category", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
 
 	return utils.ResponseJSON(c, fiber.StatusCreated, "Category created successfully", nil, category)
@@ -71,10 +71,10 @@ func (h *Handler) CreateCategory(c *fiber.Ctx) error {
 func (h *Handler) GetAllCategory(c *fiber.Ctx) error {
 	categories, err := h.usecase.GetAll()
 	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to retrieve categories", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
 
-	return utils.ResponseJSON(c, fiber.StatusOK, "Categories retrieved successfully", nil, categories)
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, categories)
 }
 
 func (h *Handler) GetByCategoryID(c *fiber.Ctx) error {
@@ -83,7 +83,7 @@ func (h *Handler) GetByCategoryID(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
-	return utils.ResponseJSON(c, fiber.StatusOK, "Category retrieved successfully", nil, category)
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, category)
 }
 
 // func (h *Handler) GetServicesByCategoryID(c *fiber.Ctx) error {
@@ -116,7 +116,7 @@ func (h *Handler) UpdateCategory(c *fiber.Ctx) error {
 	
 	uuidID, err := uuid.Parse(id)
 	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid request body", err, nil)
 	}
 
 	
@@ -124,10 +124,10 @@ func (h *Handler) UpdateCategory(c *fiber.Ctx) error {
 	category.ID = uuidID
 
 	if err := h.usecase.Update(&category); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to update category", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
 
-	return utils.ResponseJSON(c, fiber.StatusOK, "Category updated successfully", nil, category)
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, category)
 }
 
 func (h *Handler) DeleteCategory(c *fiber.Ctx) error {
@@ -137,5 +137,5 @@ func (h *Handler) DeleteCategory(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
-	return utils.ResponseJSON(c, fiber.StatusOK, "Category deleted successfully", nil, nil)
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
 }

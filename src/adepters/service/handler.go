@@ -28,17 +28,17 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	// Parse categories from the request body
 	var categories []Entities.Category
 	if err := c.BodyParser(&categories); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid categories format", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
 
 	// Associate categories with the service
 	service.Categories = categories
 
 	if err := h.ServiceUsecase.CreateService(&service); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to create service", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
 
-	return utils.ResponseJSON(c, fiber.StatusCreated, "Service created successfully", nil, service)
+	return utils.ResponseJSON(c, fiber.StatusCreated, "Success", nil, service)
 
 }
 
