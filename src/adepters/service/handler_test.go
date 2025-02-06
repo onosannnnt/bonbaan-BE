@@ -43,6 +43,10 @@ func (m *MockServiceUsecase) DeleteService(id *string) error {
 	return args.Error(0)
 }
 
+func (m *MockServiceUsecase) GetPackageByServiceID(serviceID *string) (*[]Entities.Package, error) {
+	args := m.Called(serviceID)
+	return args.Get(0).(*[]Entities.Package), args.Error(1)
+}
 func TestCreateService(t *testing.T) {
 	mockUsecase := new(MockServiceUsecase)
 	handler := NewServiceHandler(mockUsecase)
@@ -128,6 +132,7 @@ func TestGetAllServices(t *testing.T) {
 	}
 }
 
+
 func TestGetByServiceID(t *testing.T) {
 	mockUsecase := new(MockServiceUsecase)
 	handler := NewServiceHandler(mockUsecase)
@@ -174,3 +179,66 @@ func TestGetByServiceID(t *testing.T) {
 		})
 	}
 }
+
+func TestGetPackagebyServiceID(t *testing.T) {
+	mockUsecase := new(MockServiceUsecase)
+	handler := NewServiceHandler(mockUsecase)
+
+	app := fiber.New()
+	app.Get("/services/:id/presets", handler.GetPackagesbyServiceID)
+
+	validID := "550e8400-e29b-41d4-a716-446655440000"
+	presets := []Entities.Package{{ID: uuid.MustParse(validID), Name: "Test Packages"}}
+
+	tests := []struct {
+		name           string
+		serviceID      string
+		mockPackagess    *[]Entities.Package
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:           "Success",
+			serviceID:      validID,
+			mockPackagess:    &presets,
+			mockError:      nil,
+			expectedStatus: fiber.StatusOK,
+		},
+		{
+			name:           "Not Found",
+			serviceID:      validID,
+			mockPackagess:    &[]Entities.Package{},
+			mockError:      errors.New("presets not found"),
+			expectedStatus: fiber.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockUsecase.On("GetPackagessByServiceID", &tt.serviceID).Return(tt.mockPackagess, tt.mockError).Once()
+
+			req := httptest.NewRequest("GET", "/services/"+tt.serviceID+"/presets", nil)
+			resp, err := app.Test(req)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
+
+			mockUsecase.AssertExpectations(t)
+		})
+	}
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

@@ -8,6 +8,7 @@ type ServiceRepository interface {
 	Insert(ser *Entities.Service) error
 	GetAll() (*[]Entities.Service, error)
 	GetByID(id *string) (*Entities.Service, error)
+	GetPackagebyServiceID(serviceID *string) (*[]Entities.Package, error)
 	Update(service *Entities.Service) error
 	Delete(id *string) error
 }

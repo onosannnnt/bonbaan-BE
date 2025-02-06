@@ -22,14 +22,23 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	var service Entities.Service
 
 	if err := c.BodyParser(&service); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Please fill all the require fields", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid request body", err, nil)
 	}
+
+	// Parse categories from the request body
+	var categories []Entities.Category
+	if err := c.BodyParser(&categories); err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid categories format", err, nil)
+	}
+
+	// Associate categories with the service
+	service.Categories = categories
 
 	if err := h.ServiceUsecase.CreateService(&service); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusConflict, "this role already exists", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to create service", err, nil)
 	}
 
-	return utils.ResponseJSON(c, fiber.StatusCreated, "success", nil, service)
+	return utils.ResponseJSON(c, fiber.StatusCreated, "Service created successfully", nil, service)
 
 }
 
@@ -41,6 +50,7 @@ func (h *ServiceHandler) GetAllServices(c *fiber.Ctx) error {
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, services)
 }
 
+
 func (h *ServiceHandler) GetByServiceID(c *fiber.Ctx) error {
 	id := c.Params("id")
 	service, err := h.ServiceUsecase.GetByID(&id)
@@ -49,6 +59,18 @@ func (h *ServiceHandler) GetByServiceID(c *fiber.Ctx) error {
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, service)
 }
+
+
+func (h *ServiceHandler) GetPackagesbyServiceID(c *fiber.Ctx) error {
+	serviceID := c.Params("id")
+	presets, err := h.ServiceUsecase.GetPackageByServiceID(&serviceID)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, presets)
+}
+
+
 
 func (h *ServiceHandler) UpdateService(c *fiber.Ctx) error {
 	id := c.Params("id")
