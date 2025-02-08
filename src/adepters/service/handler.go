@@ -1,6 +1,8 @@
 package serviceAdapter
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
@@ -28,11 +30,12 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	// Parse categories from the request body
 	var categories []Entities.Category
 	if err := c.BodyParser(&categories); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error categories ", err, nil)
 	}
 
 	// Associate categories with the service
 	service.Categories = categories
+	fmt.Println(service)
 
 	if err := h.ServiceUsecase.CreateService(&service); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)

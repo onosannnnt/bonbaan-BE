@@ -47,48 +47,67 @@ func (m *MockServiceUsecase) GetPackageByServiceID(serviceID *string) (*[]Entiti
 	args := m.Called(serviceID)
 	return args.Get(0).(*[]Entities.Package), args.Error(1)
 }
+
 func TestCreateService(t *testing.T) {
-	mockUsecase := new(MockServiceUsecase)
-	handler := NewServiceHandler(mockUsecase)
+    mockUsecase := new(MockServiceUsecase)
+    handler := NewServiceHandler(mockUsecase)
 
-	app := fiber.New()
-	app.Post("/services", handler.CreateService)
+    app := fiber.New()
+    app.Post("/services", handler.CreateService)
 
-	tests := []struct {
-		name           string
-		inputService   Entities.Service
-		mockError      error
-		expectedStatus int
-	}{
-		{
-			name:           "Success",
-			inputService:   Entities.Service{Name: "Test Service"},
-			mockError:      nil,
-			expectedStatus: fiber.StatusCreated,
-		},
-		{
-			name:           "Service Already Exists",
-			inputService:   Entities.Service{Name: "Test Service"},
-			mockError:      errors.New("service already exists"),
-			expectedStatus: fiber.StatusConflict,
-		},
-	}
+    tests := []struct {
+        name           string
+        inputService   Entities.Service
+        mockError      error
+        expectedStatus int
+    }{
+        {
+            name: "Success",
+            inputService: Entities.Service{
+                ID:          uuid.New(),
+                Name:        "Test Service",
+                Description: "Test Description",
+                Rate:        5,
+                Categories: []Entities.Category{
+                    {ID: uuid.New(), Category: "Category 1"},
+                    {ID: uuid.New(), Category: "Category 2"},
+                },
+            },
+            mockError:      nil,
+            expectedStatus: fiber.StatusCreated,
+        },
+        {
+            name: "Service Already Exists",
+            inputService: Entities.Service{
+                ID:          uuid.New(),
+                Name:        "Test Service",
+                Description: "Test Description",
+                Rate:        5,
+                Categories: []Entities.Category{
+                    {ID: uuid.New(), Category: "Category 1"},
+                    {ID: uuid.New(), Category: "Category 2"},
+                },
+            },
+            mockError:      errors.New("service already exists"),
+            expectedStatus: fiber.StatusConflict,
+        },
+    }
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockUsecase.On("CreateService", &tt.inputService).Return(tt.mockError).Once()
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            mockUsecase.On("CreateService", &tt.inputService).Return(tt.mockError).Once()
 
-			body, _ := json.Marshal(tt.inputService)
-			req := httptest.NewRequest("POST", "/services", bytes.NewReader(body))
-			req.Header.Set("Content-Type", "application/json")
+            body, _ := json.Marshal(tt.inputService)
+            req := httptest.NewRequest("POST", "/services", bytes.NewReader(body))
+            req.Header.Set("Content-Type", "application/json")
 
-			resp, err := app.Test(req)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
+            resp, err := app.Test(req)
+            assert.NoError(t, err)
+            assert.Equal(t, tt.expectedStatus, resp.StatusCode)
 
-			mockUsecase.AssertExpectations(t)
-		})
-	}
+            mockUsecase.AssertExpectations(t)
+        })
+    }
 }
 
 func TestGetAllServices(t *testing.T) {
@@ -185,7 +204,7 @@ func TestGetPackagebyServiceID(t *testing.T) {
 	handler := NewServiceHandler(mockUsecase)
 
 	app := fiber.New()
-	app.Get("/services/:id/presets", handler.GetPackagesbyServiceID)
+	app.Get("/services/:id/packages", handler.GetPackagesbyServiceID)
 
 	validID := "550e8400-e29b-41d4-a716-446655440000"
 	presets := []Entities.Package{{ID: uuid.MustParse(validID), Name: "Test Packages"}}
@@ -241,4 +260,3 @@ func TestGetPackagebyServiceID(t *testing.T) {
 
 
 
- 
