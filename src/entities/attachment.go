@@ -10,4 +10,5 @@ type Attachment struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:(uuid_generate_v4())"`
 	URL  string    `json:"url"`
 	ServiceID   uuid.UUID  `json:"service_id"`
+	Service Service `json:"service" gorm:"foreignKey:ServiceID"`
 }

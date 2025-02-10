@@ -54,6 +54,7 @@ func main() {
 	router.ServiceRouter(app, db)
 	router.InitPackageRouter(app, db)
 	router.InitCategoryRouter(app, db)
+	router.InitAttachmentRouter(app, db)
 	app.Listen(":" + Config.Port)
 	
 }
