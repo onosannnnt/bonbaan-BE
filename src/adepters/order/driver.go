@@ -1,8 +1,6 @@
 package orderAdepter
 
 import (
-	"fmt"
-
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	orderUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order"
 	"gorm.io/gorm"
@@ -63,7 +61,8 @@ func (d *OrderDriver) Update(id *string, order *Entities.Order) error {
 }
 
 func (d *OrderDriver) Delete(id *string) error {
-	fmt.Println(*id)
+
+	// fmt.Println(*id)
 	if err := d.db.Where("id = ?", *id).Delete(&Entities.Order{}).Error; err != nil {
 		return err
 	}
