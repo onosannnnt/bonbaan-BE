@@ -9,7 +9,7 @@ type CategoryRepository interface {
 	// AddServiceToCategory(categoryID *string, serviceID *string) error
 	
 	GetByID(id *string) (*Entities.Category, error)
-	// GetServicesByCategoryID(categoryID *string) (*[]Entities.Service, error)
+	GetServicesByCategoryID(categoryID *string) (*[]Entities.Service, error)
 	// GetCategoriesByServiceID(serviceID *string) (*[]Entities.Category, error)
 	GetAll() (*[]Entities.Category, error)
 	

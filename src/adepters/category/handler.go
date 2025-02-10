@@ -86,16 +86,14 @@ func (h *Handler) GetByCategoryID(c *fiber.Ctx) error {
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, category)
 }
 
-// func (h *Handler) GetServicesByCategoryID(c *fiber.Ctx) error {
-// 	id:= c.Params("id")
-
-	
-// 	services, err := h.usecase.GetServicesByCategoryID(&id)
-// 	if err != nil {
-// 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to retrieve services", err, nil)
-// 	}
-// 	return utils.ResponseJSON(c, fiber.StatusOK, "Services retrieved successfully", nil, services)
-// }
+func (h *Handler) GetServicesByCategoryID(c *fiber.Ctx) error {
+	id:= c.Params("id")
+	services, err := h.usecase.GetServicesByCategoryID(&id)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to retrieve services", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "Services retrieved successfully", nil, services)
+}
 
 // func (h *Handler) GetCategoriesByServiceID(c *fiber.Ctx) error {
 // 	id:= c.Params("id")

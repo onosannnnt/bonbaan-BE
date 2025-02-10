@@ -39,8 +39,8 @@ func TestServiceDriver_Create(t *testing.T) {
 		Description: "Test Description",
 		Rate:        5,
 		Categories: []Entities.Category{
-			{ID: uuid.New(), Category: "Category 1"},
-			{ID: uuid.New(), Category: "Category 2"},
+			{ID: uuid.New(), Name: "Category 1"},
+			{ID: uuid.New(), Name: "Category 2"},
 		},
 	}
 

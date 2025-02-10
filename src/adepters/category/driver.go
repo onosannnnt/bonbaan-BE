@@ -1,6 +1,7 @@
 package categoryAdapter
 
 import (
+	"github.com/google/uuid"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	categoryUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/category"
 	"gorm.io/gorm"
@@ -77,21 +78,21 @@ func (d *Categorydriver) GetByID(id *string) (*Entities.Category, error) {
 	return &category, nil
 }
 
-// func (d *Categorydriver) GetServicesByCategoryID(categoryID *string) (*[]Entities.Service, error) {
-// 	// Convert string to uuid.UUID
-// 	catID, err := uuid.Parse(*categoryID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (d *Categorydriver) GetServicesByCategoryID(categoryID *string) (*[]Entities.Service, error) {
+	// Convert string to uuid.UUID
+	catID, err := uuid.Parse(*categoryID)
+	if err != nil {
+		return nil, err
+	}
 
-// 	var services []Entities.Service
-// 	if err := d.db.Joins("JOIN service_categories ON services.id = service_categories.service_id").
-// 		Where("service_categories.category_id = ?", catID).
-// 		Find(&services).Error; err != nil {
-// 		return nil, err
-// 	}
-// 	return &services, nil
-// }
+	var services []Entities.Service
+	if err := d.db.Preload("Categories").Joins("JOIN services_categories ON services.id = services_categories.service_id").
+		Where("services_categories.category_id = ?", catID).
+		Find(&services).Error; err != nil {
+		return nil, err
+	}
+	return &services, nil
+}
 
 // func (d *Categorydriver) GetCategoriesByServiceID(serviceID *string) (*[]Entities.Category, error) {
 // 	// Convert string to uuid.UUID

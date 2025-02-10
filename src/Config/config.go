@@ -10,7 +10,8 @@ import (
 )
 
 var Port string
-
+var BucketName string
+var BucketKey string
 func init() {
     _, filename, _, _ := runtime.Caller(0)
     currentFileDir := filepath.Dir(filename)
@@ -38,4 +39,6 @@ func init() {
     }
 
 	Port = os.Getenv("PORT")
+    BucketName = os.Getenv("BUCKET_NAME")
+    BucketKey = os.Getenv("BUCKET_KEY")
 }

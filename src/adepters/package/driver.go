@@ -18,11 +18,15 @@ func NewPackageDriver(db *gorm.DB) packageUsecase.PackageRepository {
 
 // Implement the Insert method to satisfy the ServiceRepository interface
 func (d *PackageDriver) Insert(packages *Entities.Package) error {
+
+	// fmt.Println("in driver ", Entities.Package)
+
 	if err := d.db.Create(packages).Error; err != nil {
 		return err
 	}
 	return nil
 }
+
 
 func (d *PackageDriver) GetAll() (*[]Entities.Package, error) {
 	var packages []Entities.Package
@@ -46,6 +50,7 @@ func (d *PackageDriver) GetByServiceID(serviceID *string) (*[]Entities.Package, 
 	}
 	return &packages, nil
 }
+
 
 
 

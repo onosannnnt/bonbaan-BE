@@ -5,8 +5,9 @@ import (
 	"gorm.io/gorm"
 )
 
-type Category  struct {
+type Attachment struct {
 	gorm.Model
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:(uuid_generate_v4())"`
-	Name  string    `json:"name"`
+	URL  string    `json:"url"`
+	ServiceID   uuid.UUID  `json:"service_id"`
 }

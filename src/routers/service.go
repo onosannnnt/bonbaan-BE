@@ -24,6 +24,7 @@ func ServiceRouter(app *fiber.App, db *gorm.DB) {
 
 	admin := protected.Group("/")
 	admin.Use(middleware.IsAdmin)
+	
 	admin.Post("/", serviceHandler.CreateService)
 	admin.Patch("/:id", serviceHandler.UpdateService)
 	admin.Delete("/:id", serviceHandler.DeleteService)

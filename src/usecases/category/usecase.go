@@ -9,7 +9,7 @@ type CategoryUsecase interface {
 	// AddServiceToCategory(categoryID *string, serviceID *string) error
 	// RemoveServiceFromCategory(categoryID *string, serviceID *string) error
 	GetByID(id *string) (*Entities.Category, error)
-	// GetServicesByCategoryID(categoryID *string) (*[]Entities.Service, error)
+	GetServicesByCategoryID(categoryID *string) (*[]Entities.Service, error)
 	// GetCategoriesByServiceID(serviceID *string) (*[]Entities.Category, error)
 	GetAll( ) (*[]Entities.Category, error)
 	Update(  category *Entities.Category) error
@@ -47,9 +47,9 @@ func (u *CategoryAsService) GetByID(id *string) (*Entities.Category, error) {
 }
 
 
-// func (u *CategoryAsService) GetServicesByCategoryID(categoryID *string) (*[]Entities.Service, error) {
-// 	return u.CategoryRepo.GetServicesByCategoryID(categoryID)
-// }
+func (u *CategoryAsService) GetServicesByCategoryID(categoryID *string) (*[]Entities.Service, error) {
+	return u.CategoryRepo.GetServicesByCategoryID(categoryID)
+}
 
 
 // func (u *CategoryAsService) GetCategoriesByServiceID(serviceID *string) (*[]Entities.Category, error) {
