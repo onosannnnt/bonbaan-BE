@@ -14,11 +14,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// Replace with your project and bucket details.
-var (
-	projectID  = "webpro-421315"
-	bucketName = "webpro-421315.firebasestorage.app" // Typically your Firebase Storage bucket name
-)
 
 
 func main() {
