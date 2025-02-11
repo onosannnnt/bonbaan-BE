@@ -10,3 +10,7 @@ type OrderRepository interface {
 	Delete(id *string) error
 	GetDefaultStatus() (*Entities.Status, error)
 }
+
+type TransactionRepository interface {
+	Insert(transaction *Entities.Transaction) error
+}

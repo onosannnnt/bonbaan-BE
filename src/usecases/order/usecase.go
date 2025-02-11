@@ -1,7 +1,11 @@
 package orderUsecase
 
 import (
+	"github.com/omise/omise-go"
+	"github.com/omise/omise-go/operations"
+	"github.com/onosannnnt/bonbaan-BE/src/Config"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
+	serviceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
 )
 
 type OrderUsecase interface {
@@ -13,12 +17,14 @@ type OrderUsecase interface {
 }
 
 type OrderService struct {
-	orderRepo OrderRepository
+	orderRepo   OrderRepository
+	serviceRepo serviceUsecase.ServiceRepository
 }
 
-func NewOrderService(repo OrderRepository) OrderUsecase {
+func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.ServiceRepository) OrderUsecase {
 	return &OrderService{
-		orderRepo: repo,
+		orderRepo:   orderRepo,
+		serviceRepo: serviceRepo,
 	}
 }
 
@@ -27,6 +33,32 @@ func (s *OrderService) Insert(order *Entities.Order) error {
 	if err != nil {
 		return err
 	}
+	client, err := omise.NewClient(Config.OmisePublicKey, Config.OmiseSecretKey)
+	if err != nil {
+		return err
+	}
+	source := &omise.Source{}
+	err = client.Do(source, &operations.CreateSource{
+		Amount:   int64(20 * 100),
+		Currency: "thb",
+		Type:     "promptpay",
+	})
+	if err != nil {
+		return err
+	}
+	charge := &omise.Charge{}
+	err = client.Do(charge, &operations.CreateCharge{
+		Amount:   source.Amount,
+		Currency: source.Currency,
+		Source:   source.ID,
+	})
+	if err != nil {
+		return err
+	}
+	var transaction Entities.Transaction
+	transaction.Price = 20
+	transaction.Charge = *charge
+	order.Transaction = transaction
 	order.Status = *status
 	return s.orderRepo.Insert(order)
 }
