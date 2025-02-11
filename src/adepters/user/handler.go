@@ -73,9 +73,7 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 func (h *UserHandler) Me(c *fiber.Ctx) error {
 	userID := c.Get("UserID")
 	if userID == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "missing UserID in header",
-		})
+		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
 	}
 	user, err := h.userUsecase.Me(&userID)
 	if err != nil {
@@ -92,9 +90,7 @@ func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 	// userId := c.Locals(Constance.UserID_ctx).(string)
 	userId := c.Get("UserID")
 	if userId == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "missing UserID in header",
-		})
+		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
 	}
 	user, err := h.userUsecase.ChangePassword(&userId, &changePasswordRequest)
 	if err != nil {
@@ -161,7 +157,7 @@ func (h *UserHandler) Update(c *fiber.Ctx) error {
 	// userID, ok := c.Locals(Constance.UserID_ctx).(string)
 	userID := c.Get("UserID")
 	if userID == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "missing UserID in header"})
+		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
 	}
 
 	user.ID = userID
@@ -176,9 +172,7 @@ func (h *UserHandler) Delete(c *fiber.Ctx) error {
 	// userID := c.Locals(Constance.UserID_ctx).(string)
 	userID := c.Get("UserID")
 	if userID == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "missing UserID in header",
-		})
+		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
 	}
 	err := h.userUsecase.Delete(&userID)
 	if err != nil {
