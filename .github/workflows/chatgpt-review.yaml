@@ -1,3 +1,5 @@
+name: chatgpt-reviews
+
 on:
   pull_request:
     types: [opened, synchronize]
