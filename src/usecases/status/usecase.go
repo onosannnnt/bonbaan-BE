@@ -22,15 +22,15 @@ func NewStatusService(repo StatusRepository) StatusUsecase {
 }
 
 func (s *StatusService) GetStatusByID(id *string) (*Entities.Status, error) {
-	return s.statusRepo.FindStatusByID(id)
+	return s.statusRepo.GetByName(id)
 }
 
 func (s *StatusService) GetStatusByName(name *string) (*Entities.Status, error) {
-	return s.statusRepo.FindStatusByName(name)
+	return s.statusRepo.GetByName(name)
 }
 
 func (s *StatusService) GetAll() ([]*Entities.Status, error) {
-	return s.statusRepo.FindAll()
+	return s.statusRepo.GetAll()
 }
 
 func (s *StatusService) Insert(status *Entities.Status) error {
