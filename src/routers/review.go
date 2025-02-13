@@ -17,8 +17,12 @@ func ReviewRouter(app *fiber.App, db *gorm.DB) {
 	review := app.Group("/reviews")
 	review.Post("/", reviewHandler.Insert)
 
+	review.Get("/",reviewHandler.GetAll)
+	review.Get("/:id",reviewHandler.GetByID)
 
-	// review.Delete("/:id",reviewHandler.Delete)
+	review.Patch("/:id", reviewHandler.Update)
+
+	review.Delete("/:id",reviewHandler.Delete)
 
 	// protected := review.Group("/protected")
 	// protected.Use(middleware.IsAuth)
