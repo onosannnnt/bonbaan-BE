@@ -13,7 +13,7 @@ func InitStatusRouter(app *fiber.App, db *gorm.DB) {
 	statusUsecase := statusUsecase.NewStatusService(statusRepo)
 	statusHandler := statusAdapter.NewStatusHandler(statusUsecase)
 
-	status := app.Group("/status")
+	status := app.Group("/statuses")
 	status.Get("/", statusHandler.GetAllStatus)
 	status.Get("/:id", statusHandler.GetStatusByID)
 	status.Get("/name/:name", statusHandler.GetStatusByName)

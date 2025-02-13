@@ -1,6 +1,8 @@
 package orderUsecase
 
 import (
+	"strconv"
+
 	"github.com/omise/omise-go"
 	"github.com/omise/omise-go/operations"
 	"github.com/onosannnnt/bonbaan-BE/src/Config"
@@ -9,11 +11,12 @@ import (
 )
 
 type OrderUsecase interface {
-	Insert(order *Entities.Order) error
+	Insert(order *Entities.Order) (*Entities.Order, error)
 	GetAll() ([]*Entities.Order, error)
-	GetOne(id *string) (*Entities.Order, error)
+	GetByID(id *string) (*Entities.Order, error)
 	Update(id *string, order *Entities.Order) error
 	Delete(id *string) error
+	Hook(id *string) error
 }
 
 type OrderService struct {
@@ -28,23 +31,28 @@ func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.Servi
 	}
 }
 
-func (s *OrderService) Insert(order *Entities.Order) error {
+func (s *OrderService) Insert(order *Entities.Order) (*Entities.Order, error) {
 	status, err := s.orderRepo.GetDefaultStatus()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	client, err := omise.NewClient(Config.OmisePublicKey, Config.OmiseSecretKey)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	source := &omise.Source{}
+	price, err := strconv.ParseFloat(order.OrderDetail["price"].(string), 64)
+	if err != nil {
+		return nil, err
+	}
 	err = client.Do(source, &operations.CreateSource{
-		Amount:   int64(20 * 100),
+
+		Amount:   int64(price * 100),
 		Currency: "thb",
 		Type:     "promptpay",
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	charge := &omise.Charge{}
 	err = client.Do(charge, &operations.CreateCharge{
@@ -53,14 +61,27 @@ func (s *OrderService) Insert(order *Entities.Order) error {
 		Source:   source.ID,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var transaction Entities.Transaction
-	transaction.Price = 20
+	transaction.Price = price
+	transaction.ChargeID = charge.ID
 	transaction.Charge = *charge
 	order.Transaction = transaction
 	order.Status = *status
-	return s.orderRepo.Insert(order)
+	err = s.orderRepo.Insert(order)
+	if err != nil {
+		return nil, err
+	}
+	return order, nil
+}
+
+func (s *OrderService) Hook(ChargeID *string) error {
+	err := s.orderRepo.GetAndUpdateByChargeID(*ChargeID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *OrderService) GetAll() ([]*Entities.Order, error) {
@@ -68,7 +89,7 @@ func (s *OrderService) GetAll() ([]*Entities.Order, error) {
 	return s.orderRepo.GetAll()
 }
 
-func (s *OrderService) GetOne(id *string) (*Entities.Order, error) {
+func (s *OrderService) GetByID(id *string) (*Entities.Order, error) {
 	return s.orderRepo.GetByID(id)
 }
 

@@ -19,7 +19,7 @@ func TestInitRoleRouter(t *testing.T) {
 	routes := app.GetRoutes()
 
 	expectedRoutes := map[string]string{
-		"/roles/":                "GET,POST",
+		"/roles/":                 "GET,POST",
 		"/roles/protected/admin/": "POST",
 	}
 

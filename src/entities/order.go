@@ -24,7 +24,7 @@ type Order struct {
 	ServiceID          uuid.UUID              `json:"serviceID"`
 	Service            Service                `gorm:"foreignKey:ServiceID;references:ID"`
 	TransactionID      uuid.UUID              `json:"transactionID"`
-	Transaction        Transaction            `gorm:"foreignKey:TransactionID;references:ID"`
+	Transaction        Transaction            `gorm:"foreignKey:TransactionID;references:ID;"`
 }
 
 // func (o *Order) BeforeCreate(tx *gorm.DB) (err error) {
