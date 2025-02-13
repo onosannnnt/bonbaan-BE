@@ -18,13 +18,13 @@ func InitStatusRouter(app *fiber.App, db *gorm.DB) {
 	status.Get("/:id", statusHandler.GetStatusByID)
 	status.Get("/name/:name", statusHandler.GetStatusByName)
 
-	protected := status.Group("/protected")
+	protected := status.Group("/")
 	protected.Use(middleware.IsAuth)
 
-	admin := protected.Group("/admin")
+	admin := protected.Group("/")
 	admin.Use(middleware.IsAdmin)
 	admin.Post("/", statusHandler.InsertStatus)
-	admin.Put("/:id", statusHandler.UpdateStatus)
+	admin.Patch("/:id", statusHandler.UpdateStatus)
 	admin.Delete("/:id", statusHandler.DeleteStatus)
 
 }
