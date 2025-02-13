@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -80,64 +81,69 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString("No attachments provided")
 	}
 
-	// Initialize the Cloud Storage client using the service account credentials.
-	ctx := context.Background()
-	client, err := storage.NewClient(ctx, option.WithCredentialsFile(Config.BucketKey))
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to create storage client", err, nil)
-	}
-	defer client.Close()
-
-	// Set your bucket name.
-	bucketName := Config.BucketName
-
-	// Slice to hold shareable URLs for all images.
-	shareableURLs := make([]string, 0, len(files))
-
-	for _, fileHeader := range files {
-		// Open the file.
-		file, err := fileHeader.Open()
+	// Check if we are in test mode:
+	if os.Getenv("TEST_MODE") == "true" {
+		// Simulate file uploads by appending a dummy URL for each attachment.
+		for range files {
+			service.Attachments = append(service.Attachments, Entities.Attachment{URL: "http://dummy-url"})
+		}
+	} else {
+		// Initialize the Cloud Storage client using the service account credentials.
+		ctx := context.Background()
+		client, err := storage.NewClient(ctx, option.WithCredentialsFile(Config.BucketKey))
 		if err != nil {
-			return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Error opening file", err, nil)
+			return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to create storage client", err, nil)
 		}
+		defer client.Close()
 
-		// Generate a unique object name.
-		objectName := fmt.Sprintf("images/%d_%s", time.Now().UnixNano(), fileHeader.Filename)
+		// Set your bucket name.
+		bucketName := Config.BucketName
 
-		// Generate a random download token.
-		token := uuid.New().String()
+		// Slice to hold shareable URLs for all images.
+		shareableURLs := make([]string, 0, len(files))
 
-		// Create a writer to upload the file to the storage bucket.
-		wc := client.Bucket(bucketName).Object(objectName).NewWriter(ctx)
-		// Set the metadata with the download token.
-		wc.Metadata = map[string]string{
-			"firebaseStorageDownloadTokens": token,
-		}
+		for _, fileHeader := range files {
+			// Open the file.
+			file, err := fileHeader.Open()
+			if err != nil {
+				return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Error opening file", err, nil)
+			}
 
-		// Copy the file's content to Cloud Storage.
-		if _, err = io.Copy(wc, file); err != nil {
+			// Generate a unique object name.
+			objectName := fmt.Sprintf("images/%d_%s", time.Now().UnixNano(), fileHeader.Filename)
+
+			// Generate a random download token.
+			token := uuid.New().String()
+
+			// Create a writer to upload the file to the storage bucket.
+			wc := client.Bucket(bucketName).Object(objectName).NewWriter(ctx)
+			// Set the metadata with the download token.
+			wc.Metadata = map[string]string{
+				"firebaseStorageDownloadTokens": token,
+			}
+
+			// Copy the file's content to Cloud Storage.
+			if _, err = io.Copy(wc, file); err != nil {
+				file.Close()
+				wc.Close()
+				return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to write file to bucket", err, nil)
+			}
 			file.Close()
-			wc.Close()
-			return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to write file to bucket", err, nil)
-		}
-		file.Close()
-		if err := wc.Close(); err != nil {
-			return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to close writer", err, nil)
+			if err := wc.Close(); err != nil {
+				return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to close writer", err, nil)
+			}
+
+			// Construct the shareable URL.
+			shareableURL := fmt.Sprintf("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
+				bucketName, url.QueryEscape(objectName), token)
+			shareableURLs = append(shareableURLs, shareableURL)
 		}
 
-		// Construct the shareable URL.
-		shareableURL := fmt.Sprintf("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
-			bucketName, url.QueryEscape(objectName), token)
-		shareableURLs = append(shareableURLs, shareableURL)
+		// Associate the shareable URLs with the service entity.
+		for _, imgURL := range shareableURLs {
+			service.Attachments = append(service.Attachments, Entities.Attachment{URL: imgURL})
+		}
 	}
-
-	// Associate the shareable URLs with the service entity.
-	// Assuming the Service entity has an Attachments field of type []string.
-	for _, img_url := range shareableURLs {
-		atg := Entities.Attachment{URL: img_url}
-		service.Attachments = append(service.Attachments, atg)
-	}
-	
 
 	// Create the service using the use case.
 	if err := h.ServiceUsecase.CreateService(&service); err != nil {

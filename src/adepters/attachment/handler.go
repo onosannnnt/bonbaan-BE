@@ -40,7 +40,7 @@ func (h *AttachmentHandler) CreateAttachment(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "invalid service_id", err, nil)
 	}
 
-	
+		
 	fileHeader, err := c.FormFile("attachments")
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "No file provided", err, nil)

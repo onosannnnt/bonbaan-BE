@@ -13,4 +13,5 @@ type CreateServiceInput struct {
 	Rate        int            `json:"rate"`
 	Categories  []string       `json:"categories"`
 	Packages    []PackageInput `json:"packages"`
+	Attachments []string       `json:"attachments,omitempty"`
 }
