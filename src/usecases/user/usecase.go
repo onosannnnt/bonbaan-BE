@@ -180,14 +180,14 @@ func (s *UserService) ResetPassword(password *model.ResetPasswordRequest) (*Enti
 		return nil, err
 	}
 	idStr := selectUser.ID.String()
-	resetPassword, err := s.resetPasswordRepo.GetByToken(&idStr, &password.Code)
+	resetPassword, err := s.resetPasswordRepo.GetByID(&idStr, &password.Code)
 	if err != nil {
 		return nil, err
 	}
 	fmt.Println(resetPassword.User.Email)
 	for password.Email != resetPassword.User.Email {
 		idStr := selectUser.ID.String()
-		resetPassword, err = s.resetPasswordRepo.GetByToken(&idStr, &password.Code)
+		resetPassword, err = s.resetPasswordRepo.GetByID(&idStr, &password.Code)
 		if err != nil {
 			return nil, err
 		}
