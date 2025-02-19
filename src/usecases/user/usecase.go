@@ -89,6 +89,7 @@ func (s *UserService) Register(user *model.CreateUserRequest) error {
 		Lastname:  user.Lastname,
 		Email:     user.Email,
 		Password:  string(hashPassword),
+		Phone:     user.Phone,
 		RoleID:    user.RoleID,
 	}
 	return s.userRepo.Insert(verifyUser)
@@ -155,7 +156,7 @@ func (s *UserService) SendResetPasswordMail(user *Entities.User) error {
 	}
 	resetPassword := &Entities.ResetPassword{
 		UserID: selectUser.ID,
-		ResetPassword: func() string {
+		Code: func() string {
 			token, err := utils.GenerateOTP(6)
 			if err != nil {
 				return ""
@@ -164,7 +165,7 @@ func (s *UserService) SendResetPasswordMail(user *Entities.User) error {
 		}(),
 		Expired: time.Now().Add(time.Minute * 5),
 	}
-	text := fmt.Sprintf("<body><h1>Here is your password reset Code <b>%s<b></h1></body>", resetPassword.ResetPassword)
+	text := fmt.Sprintf("<body><h1>Here is your password reset Code <b>%s<b></h1></body>", resetPassword.Code)
 	m := gomail.NewMessage()
 	m.SetHeader("From", "bonbaanofficial@gmail.com")
 	m.SetHeader("To", user.Email)
