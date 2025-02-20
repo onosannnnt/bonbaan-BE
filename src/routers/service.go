@@ -4,7 +4,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	serviceAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/service"
 	serviceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
-	"github.com/onosannnnt/bonbaan-BE/src/utils/middleware"
 	"gorm.io/gorm"
 )
 
@@ -19,15 +18,15 @@ func ServiceRouter(app *fiber.App, db *gorm.DB) {
 	ser.Get("/:id", serviceHandler.GetByServiceID)
 	ser.Get("/:id/packages", serviceHandler.GetPackagesbyServiceID)
 
-	protected := ser.Group("/")
-	protected.Use(middleware.IsAuth)
+	// protected := ser.Group("/")
+	// protected.Use(middleware.IsAuth)
 
-	admin := protected.Group("/")
-	admin.Use(middleware.IsAdmin)
+	// admin := protected.Group("/")
+	// admin.Use(middleware.IsAdmin)
 	
-	admin.Post("/", serviceHandler.CreateService)
-	admin.Patch("/:id", serviceHandler.UpdateService)
-	admin.Delete("/:id", serviceHandler.DeleteService)
+	ser.Post("/", serviceHandler.CreateService)
+	ser.Patch("/:id", serviceHandler.UpdateService)
+	ser.Delete("/:id", serviceHandler.DeleteService)
 	
 
 }

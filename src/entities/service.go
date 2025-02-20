@@ -14,5 +14,5 @@ type Service struct {
 	Rate        int       `json:"rate" gorm:"default:0"`
 	Categories []Category `json:"categories" gorm:"many2many:services_categories;"`
 	Packages   []Package  `json:"packages" gorm:"foreignKey:ServiceID"`
-	Attachments []Attachment `json:"	" gorm:"foreignKey:ServiceID"`
+	Attachments []Attachment `json:"attachments" gorm:"foreignKey:ServiceID"`
 }
