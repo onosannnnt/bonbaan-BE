@@ -44,6 +44,14 @@ func (d *ServiceDriver) GetByID(id *string) (*Entities.Service, error) {
 	}
 	return &service, nil
 }
+func (d *ServiceDriver) GetPackagebyServiceID(serviceID *string) (*[]Entities.Package, error) {
+	var packages []Entities.Package
+	if err := d.db.Where("service_id = ?", serviceID).Find(&packages).Error; err != nil {
+		return nil, err
+	}
+	return &packages, nil
+}
+
 
 func (d *ServiceDriver) Update(service *Entities.Service) error {
 	if err := d.db.Model(&Entities.Service{}).Where("id = ?", service.ID).Updates(service).Error; err != nil {

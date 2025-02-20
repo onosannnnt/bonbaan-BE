@@ -9,6 +9,7 @@ type ServiceUsecase interface {
 	CreateService(service *Entities.Service) error
 	GetAll(config *model.Pagination) (*[]Entities.Service, *model.Pagination, error)
 	GetByID(id *string) (*Entities.Service, error)
+    GetPackageByServiceID(serviceID *string) (*[]Entities.Package, error) // New method to get presets by service ID
 	UpdateService(service *Entities.Service) error
 	DeleteService(id *string) error
 }
@@ -53,6 +54,11 @@ func (sc *ServiceAsService) GetByID(id *string) (*Entities.Service, error) {
 	// Implementation of GetByID method
 	return sc.ServiceRepo.GetByID(id)
 }
+func (sc *ServiceAsService) GetPackageByServiceID(serviceID *string) (*[]Entities.Package, error) {
+	// Implementation of GetPackagessbyServiceID method
+	return sc.ServiceRepo.GetPackagebyServiceID(serviceID)
+}
+
 
 func (sc *ServiceAsService) UpdateService(service *Entities.Service) error {
 	// Implementation of UpdateService method

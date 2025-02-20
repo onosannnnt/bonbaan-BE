@@ -1,6 +1,5 @@
 package router
 
-
 import (
 	"strings"
 	"testing"
@@ -22,11 +21,9 @@ func TestInitStatusRouter(t *testing.T) {
 	routes := app.GetRoutes()
 	
 	expectedRoutes := map[string]string{
-		"/status/":              "GET",
-		"/status/:id":          "GET", 
+		"/status/":             "GET,POST",
+		"/status/:id":          "GET,PATCH,DELETE", 
 		"/status/name/:name":   "GET",
-		"/status/protected/admin/": "POST",
-		"/status/protected/admin/:id": "PUT,DELETE",
 	}
 	for path, methods := range expectedRoutes {
 		for _, expectedMethod := range strings.Split(methods, ",") {

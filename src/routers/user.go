@@ -29,6 +29,7 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 
 	protect := user.Group("/")
 	protect.Use(middleware.IsAuth)
+	
 	protect.Get("/me", userHandler.Me)
 	protect.Get("/", userHandler.GetAll)
 	protect.Get("/:id", userHandler.GetByID)

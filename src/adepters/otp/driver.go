@@ -25,13 +25,7 @@ func (d *otpDriver) Insert(otp *Entities.Otp) error {
 
 func (d *otpDriver) GetByEmail(id *string, code *string) (*Entities.Otp, error) {
 	var otp Entities.Otp
-	err := d.db.Where("Email = ? AND otp = ?", id, code).First(&otp).Error
-	return &otp, err
-}
-
-func (d *otpDriver) GetByUserID(id *string, code *string) (*Entities.Otp, error) {
-	var otp Entities.Otp
-	err := d.db.Where("user_id = ? AND otp = ?", id, code).First(&otp).Error
+	err := d.db.Where("email = ? AND otp = ?", id, code).First(&otp).Error
 	return &otp, err
 }
 

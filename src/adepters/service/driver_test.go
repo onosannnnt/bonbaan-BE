@@ -38,6 +38,10 @@ func TestServiceDriver_Create(t *testing.T) {
 		Name:        "Test Service",
 		Description: "Test Description",
 		Rate:        5,
+		Categories: []Entities.Category{
+			{ID: uuid.New(), Name: "Category 1"},
+			{ID: uuid.New(), Name: "Category 2"},
+		},
 	}
 
 	// Insert the service into the database
@@ -45,7 +49,7 @@ func TestServiceDriver_Create(t *testing.T) {
 	assert.NoError(t, err)
 
 	var found Entities.Service
-	fmt.Println(found.ID)
+	// fmt.Println(found.ID)
 	// Query the service by ID
 	err = db.First(&found, "id = ?", service.ID).Error
 	assert.NoError(t, err)
@@ -59,7 +63,7 @@ func TestServiceDriver_GetAll(t *testing.T) {
 	db := setupTestDB()
 	driver := NewServiceDriver(db)
 	services := []Entities.Service{
-		{ID: uuid.New(), Name: "Service 1", Description: "Description 1", Rate: 5},
+		{ID: uuid.New(), Name: "Service 1", Description: "Description 1", Rate: 5 ,},
 		{ID: uuid.New(), Name: "Service 2", Description: "Description 2", Rate: 4},
 	}
 	for _, s := range services {

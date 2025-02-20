@@ -1,7 +1,6 @@
 package router
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -20,14 +19,13 @@ func TestInitServiceRouter(t *testing.T) {
     // Verify routes are registered
     routes := app.GetRoutes()
     
-    expectedRoutes := map[string]string{
-        "/services/":                     "GET",
-        "/services/:id":                  "GET",
-        "/services/protected/admin/":     "POST",
-        "/services/protected/admin/:id":  "PATCH",
+    expectedRoutes := map[string][]string{
+        "/services/":    {"GET", "POST"},
+        "/services/:id": {"GET", "PATCH"},
     }
-    for path, methods := range expectedRoutes {
-        for _, expectedMethod := range strings.Split(methods, ",") {
+
+    for path, expectedMethods := range expectedRoutes {
+        for _, expectedMethod := range expectedMethods {
             var found bool
             for _, route := range routes {
                 if route.Path == path && route.Method == expectedMethod {
@@ -46,10 +44,10 @@ func TestInitServiceRouter(t *testing.T) {
 
     for _, s := range stack {
         for _, r := range s {
-            if r.Path == "/services/protected/admin/" {
+            if r.Path == "/services/" {
                 hasAuthMiddleware = true
             }
-            if r.Path == "/services/protected/admin/:id" {
+            if r.Path == "/services/:id" {
                 hasAdminMiddleware = true 
             }
         }

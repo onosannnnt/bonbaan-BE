@@ -9,6 +9,7 @@ type ServiceRepository interface {
 	Insert(ser *Entities.Service) error
 	GetAll(config *model.Pagination) (*[]Entities.Service, int64, error)
 	GetByID(id *string) (*Entities.Service, error)
+	GetPackagebyServiceID(serviceID *string) (*[]Entities.Package, error)
 	Update(service *Entities.Service) error
 	Delete(id *string) error
 }
