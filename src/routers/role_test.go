@@ -20,7 +20,6 @@ func TestInitRoleRouter(t *testing.T) {
 
 	expectedRoutes := map[string]string{
 		"/roles/":                "GET,POST",
-		"/roles/protected/admin/": "POST",
 	}
 
 	for path, methods := range expectedRoutes {

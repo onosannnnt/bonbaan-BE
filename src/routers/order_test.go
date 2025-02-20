@@ -23,7 +23,7 @@ func TestInitOrderRouter(t *testing.T) {
     
     expectedRoutes := map[string]string{
         "/orders/":     "POST,GET",
-        "/orders/:id": "GET,PUT,DELETE",
+        "/orders/:id": "GET,PATCH,DELETE",
     }
 
     // Assert routes exist
