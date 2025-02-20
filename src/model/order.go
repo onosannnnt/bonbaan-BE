@@ -1,10 +1,5 @@
 package model
 
-type OrderGetAll struct {
-	Page  int
-	Count int
-}
-
 // type JSONB json.RawMessage
 
 type OrderInsertRequest struct {

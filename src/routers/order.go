@@ -22,5 +22,4 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	order.Patch("/:id", orderHandler.Update)
 	order.Delete("/:id", orderHandler.Delete)
 	order.Post("/webhook", orderHandler.Hook)
-
 }

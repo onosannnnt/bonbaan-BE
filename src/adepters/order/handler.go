@@ -51,15 +51,31 @@ func (h *OrderHandler) Insert(c *fiber.Ctx) error {
 }
 
 func (h *OrderHandler) GetAll(c *fiber.Ctx) error {
-	config := model.OrderGetAll{}
+	status := c.Query("status")
+	config := model.Pagination{}
 	if err := c.QueryParser(&config); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse query", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request query", err, nil)
 	}
-	order, err := h.OrderUsecase.GetAll()
+	if status != "" {
+		order, pagination, err := h.OrderUsecase.GetByStatus(&status, &config)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, fiber.Map{
+			"orders":     order,
+			"pagination": pagination,
+		})
+	}
+	order, pagination, err := h.OrderUsecase.GetAll(&config)
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get order", err, nil)
 	}
-	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, order)
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, fiber.Map{
+		"orders":     order,
+		"pagination": pagination,
+	})
 }
 
 func (h *OrderHandler) GetByID(c *fiber.Ctx) error {

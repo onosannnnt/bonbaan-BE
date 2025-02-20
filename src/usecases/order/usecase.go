@@ -7,13 +7,15 @@ import (
 	"github.com/omise/omise-go/operations"
 	"github.com/onosannnnt/bonbaan-BE/src/Config"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
+	"github.com/onosannnnt/bonbaan-BE/src/model"
 	serviceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
 )
 
 type OrderUsecase interface {
 	Insert(order *Entities.Order) (*Entities.Order, error)
-	GetAll() ([]*Entities.Order, error)
+	GetAll(config *model.Pagination) ([]*Entities.Order, *model.Pagination, error)
 	GetByID(id *string) (*Entities.Order, error)
+	GetByStatus(status *string, config *model.Pagination) ([]*Entities.Order, *model.Pagination, error)
 	Update(id *string, order *Entities.Order) error
 	Delete(id *string) error
 	Hook(id *string) error
@@ -84,13 +86,50 @@ func (s *OrderService) Hook(ChargeID *string) error {
 	return nil
 }
 
-func (s *OrderService) GetAll() ([]*Entities.Order, error) {
-
-	return s.orderRepo.GetAll()
+func (s *OrderService) GetAll(config *model.Pagination) ([]*Entities.Order, *model.Pagination, error) {
+	if config.PageSize <= 0 {
+		config.PageSize = 10
+	}
+	if config.CurrentPage <= 0 {
+		config.CurrentPage = 1
+	}
+	orders, totalRecords, err := s.orderRepo.GetAll(config)
+	if err != nil {
+		return nil, nil, err
+	}
+	totalPages := (totalRecords + int64(config.CurrentPage) - 1) / int64(config.PageSize)
+	pagination := &model.Pagination{
+		CurrentPage:  config.CurrentPage,
+		PageSize:     config.PageSize,
+		TotalPages:   int(totalPages),
+		TotalRecords: int(totalRecords),
+	}
+	return orders, pagination, nil
 }
 
 func (s *OrderService) GetByID(id *string) (*Entities.Order, error) {
 	return s.orderRepo.GetByID(id)
+}
+
+func (s *OrderService) GetByStatus(status *string, config *model.Pagination) ([]*Entities.Order, *model.Pagination, error) {
+	if config.PageSize <= 0 {
+		config.PageSize = 10
+	}
+	if config.CurrentPage <= 0 {
+		config.CurrentPage = 1
+	}
+	orders, totalRecords, err := s.orderRepo.GetByStatusName(status, config)
+	if err != nil {
+		return nil, nil, err
+	}
+	totalPages := (totalRecords + int64(config.CurrentPage) - 1) / int64(config.PageSize)
+	pagination := &model.Pagination{
+		CurrentPage:  config.CurrentPage,
+		PageSize:     config.PageSize,
+		TotalPages:   int(totalPages),
+		TotalRecords: int(totalRecords),
+	}
+	return orders, pagination, nil
 }
 
 func (s *OrderService) Update(id *string, order *Entities.Order) error {

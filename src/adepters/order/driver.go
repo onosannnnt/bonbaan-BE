@@ -3,6 +3,7 @@ package orderAdepter
 import (
 	"github.com/google/uuid"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
+	"github.com/onosannnnt/bonbaan-BE/src/model"
 	orderUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order"
 	"gorm.io/gorm"
 )
@@ -32,15 +33,22 @@ func (d *OrderDriver) Insert(order *Entities.Order) error {
 	return nil
 }
 
-func (d *OrderDriver) GetAll() ([]*Entities.Order, error) {
+func (d *OrderDriver) GetAll(config *model.Pagination) ([]*Entities.Order, int64, error) {
 	var selectOrder []*Entities.Order
+	var totalRecords int64
+
+	if err := d.db.Model(&Entities.Order{}).Count(&totalRecords).Error; err != nil {
+		return nil, 0, err
+	}
+
 	if err := d.db.Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Omit("password")
-
-	}).Preload("Service").Order("created_at desc").Find(&selectOrder).Error; err != nil {
-		return nil, err
+	}).Preload("Service").Order("created_at desc").
+		Limit(config.PageSize).Offset((config.CurrentPage - 1) * config.PageSize).
+		Find(&selectOrder).Error; err != nil {
+		return nil, 0, err
 	}
-	return selectOrder, nil
+	return selectOrder, totalRecords, nil
 }
 
 func (d *OrderDriver) GetByID(id *string) (*Entities.Order, error) {
@@ -95,4 +103,22 @@ func (d *OrderDriver) GetAndUpdateByChargeID(chargeID string) error {
 	}
 
 	return nil
+}
+
+func (d *OrderDriver) GetByStatusName(status *string, config *model.Pagination) ([]*Entities.Order, int64, error) {
+	var selectOrder []*Entities.Order
+	var totalRecords int64
+
+	if err := d.db.Model(&Entities.Order{}).Count(&totalRecords).Error; err != nil {
+		return nil, 0, err
+	}
+	if err := d.db.Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Omit("password")
+
+	}).Preload("Service").Joins("JOIN statuses ON statuses.id = orders.status_id").
+		Where("statuses.name = ?", &status).
+		Limit(config.PageSize).Offset((config.CurrentPage - 1) * config.PageSize).Find(&selectOrder).Error; err != nil {
+		return nil, 0, err
+	}
+	return selectOrder, totalRecords, nil
 }
