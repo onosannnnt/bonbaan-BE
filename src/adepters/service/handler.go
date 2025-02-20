@@ -35,7 +35,7 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
     if err != nil {
         return utils.ResponseJSON(c, fiber.StatusBadRequest, "Error parsing form data", err, nil)
     }
-    fmt.Println(form.Value)
+    // fmt.Println(form.Value)
 
     var input model.CreateServiceInput
 
@@ -60,9 +60,9 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 
     // Parse packages as a JSON string.
     if v, exists := form.Value["packages"]; exists && len(v) > 0 {
-		fmt.Println(v[0])
+		// fmt.Println(v[0])
 		// type of v[0]
-		fmt.Printf("%T\n", v[0])
+		// fmt.Printf("%T\n", v[0])
         if err := json.Unmarshal([]byte(v[0]), &input.Packages); err != nil {
             return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid packages data", err, nil)
         }
