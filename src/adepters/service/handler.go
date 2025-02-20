@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
+	"github.com/onosannnnt/bonbaan-BE/src/model"
 	ServiceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
 	"github.com/onosannnnt/bonbaan-BE/src/utils"
 )
@@ -34,11 +35,18 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 }
 
 func (h *ServiceHandler) GetAllServices(c *fiber.Ctx) error {
-	services, err := h.ServiceUsecase.GetAll()
+	config := model.Pagination{}
+	if err := c.QueryParser(&config); err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request query", err, nil)
+	}
+	services, pagination, err := h.ServiceUsecase.GetAll(&config)
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
-	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, services)
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, fiber.Map{
+		"services":   services,
+		"pagination": pagination,
+	})
 }
 
 func (h *ServiceHandler) GetByServiceID(c *fiber.Ctx) error {
