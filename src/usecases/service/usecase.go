@@ -9,7 +9,7 @@ type ServiceUsecase interface {
 	CreateService(service *Entities.Service) error
 	GetAll(config *model.Pagination) (*[]Entities.Service, *model.Pagination, error)
 	GetByID(id *string) (*Entities.Service, error)
-    GetPackageByServiceID(serviceID *string) (*[]Entities.Package, error) // New method to get presets by service ID
+	GetPackageByServiceID(serviceID *string) (*[]Entities.Package, error) // New method to get presets by service ID
 	UpdateService(service *Entities.Service) error
 	DeleteService(id *string) error
 }
@@ -38,8 +38,12 @@ func (sc *ServiceAsService) GetAll(config *model.Pagination) (*[]Entities.Servic
 	if err != nil {
 		return nil, nil, err
 	}
-
-	totalPages := (totalRecords + int64(config.CurrentPage) - 1) / int64(config.PageSize)
+	var totalPages int64
+	if totalRecords%int64(config.PageSize) == 0 {
+		totalPages = totalRecords / int64(config.PageSize)
+	} else {
+		totalPages = totalRecords/int64(config.PageSize) + 1
+	}
 	pagination := &model.Pagination{
 		CurrentPage:  config.CurrentPage,
 		PageSize:     config.PageSize,
@@ -58,7 +62,6 @@ func (sc *ServiceAsService) GetPackageByServiceID(serviceID *string) (*[]Entitie
 	// Implementation of GetPackagessbyServiceID method
 	return sc.ServiceRepo.GetPackagebyServiceID(serviceID)
 }
-
 
 func (sc *ServiceAsService) UpdateService(service *Entities.Service) error {
 	// Implementation of UpdateService method

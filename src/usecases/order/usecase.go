@@ -97,7 +97,12 @@ func (s *OrderService) GetAll(config *model.Pagination) ([]*Entities.Order, *mod
 	if err != nil {
 		return nil, nil, err
 	}
-	totalPages := (totalRecords + int64(config.CurrentPage) - 1) / int64(config.PageSize)
+	var totalPages int64
+	if totalRecords%int64(config.PageSize) == 0 {
+		totalPages = totalRecords / int64(config.PageSize)
+	} else {
+		totalPages = totalRecords/int64(config.PageSize) + 1
+	}
 	pagination := &model.Pagination{
 		CurrentPage:  config.CurrentPage,
 		PageSize:     config.PageSize,
@@ -122,7 +127,12 @@ func (s *OrderService) GetByStatus(status *string, config *model.Pagination) ([]
 	if err != nil {
 		return nil, nil, err
 	}
-	totalPages := (totalRecords + int64(config.CurrentPage) - 1) / int64(config.PageSize)
+	var totalPages int64
+	if totalRecords%int64(config.PageSize) == 0 {
+		totalPages = totalRecords / int64(config.PageSize)
+	} else {
+		totalPages = totalRecords/int64(config.PageSize) + 1
+	}
 	pagination := &model.Pagination{
 		CurrentPage:  config.CurrentPage,
 		PageSize:     config.PageSize,
