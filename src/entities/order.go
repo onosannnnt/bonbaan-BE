@@ -26,10 +26,3 @@ type Order struct {
 	TransactionID      uuid.UUID              `json:"transactionID"`
 	Transaction        Transaction            `gorm:"foreignKey:TransactionID;references:ID;"`
 }
-
-// func (o *Order) BeforeCreate(tx *gorm.DB) (err error) {
-// 	if o.ID == "" {
-// 		o.ID, err = utils.GenerateRandomID()
-// 	}
-// 	return
-// }
