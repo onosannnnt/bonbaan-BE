@@ -35,11 +35,7 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 	protect.Get("/:id", userHandler.GetByID)
 	protect.Get("/email-or-username/:emailOrUsername", userHandler.GetByEmailOrUsername)
 	protect.Delete("/", userHandler.Delete)
-
-	owner := protect.Group("/")
-	owner.Use(middleware.IsOwner)
-
-	owner.Patch("/", userHandler.ChangePassword)
-	owner.Patch("/", userHandler.Update)
+	protect.Patch("/change-password", userHandler.ChangePassword)
+	protect.Patch("/", userHandler.Update)
 
 }

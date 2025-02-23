@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/onosannnnt/bonbaan-BE/src/Constance"
 	"github.com/onosannnnt/bonbaan-BE/src/config"
+	"github.com/onosannnnt/bonbaan-BE/src/constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	"github.com/onosannnnt/bonbaan-BE/src/utils"
@@ -20,14 +20,14 @@ type UserUsecase interface {
 	InsertOTP(user *Entities.User) error
 	Register(user *model.CreateUserRequest) error
 	Login(user *Entities.User) (token *string, err error)
-	Me(userId *string) (user *Entities.User, err error)
-	ChangePassword(userId *string, password *model.ChangePasswordRequest) (*Entities.User, error)
+	Me(UserID *string) (user *Entities.User, err error)
+	ChangePassword(UserID *string, password *model.ChangePasswordRequest) (*Entities.User, error)
 	SendResetPasswordMail(user *Entities.User) error
 	ResetPassword(password *model.ResetPasswordRequest) (*Entities.User, error)
 	GetAll() (*[]Entities.User, error)
-	GetByID(userId *string) (*Entities.User, error)
+	GetByID(UserID *string) (*Entities.User, error)
 	GetByEmailOrUsername(user *Entities.User) (*Entities.User, error)
-	Delete(userId *string) error
+	Delete(UserID *string) error
 	Update(user *model.UpdateRequest) (*Entities.User, error)
 }
 
@@ -105,10 +105,10 @@ func (s *UserService) Login(user *Entities.User) (*string, error) {
 	}
 
 	claims := jwt.MapClaims{
-		Constance.Email_ctx:    selectUser.Email,
-		Constance.Username_ctx: selectUser.Username,
-		Constance.UserID_ctx:   selectUser.ID,
-		Constance.Role_ctx:     selectUser.Role.Role,
+		constance.Email_ctx:    selectUser.Email,
+		constance.Username_ctx: selectUser.Username,
+		constance.UserID_ctx:   selectUser.ID,
+		constance.Role_ctx:     selectUser.Role.Role,
 		"exp":                  time.Now().Add(time.Hour * 24 * 3).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -119,16 +119,16 @@ func (s *UserService) Login(user *Entities.User) (*string, error) {
 	return &tokenString, nil
 }
 
-func (s *UserService) Me(userId *string) (*Entities.User, error) {
-	selectUser, err := s.userRepo.GetByID(userId)
+func (s *UserService) Me(UserID *string) (*Entities.User, error) {
+	selectUser, err := s.userRepo.GetByID(UserID)
 	if err != nil {
 		return &Entities.User{}, err
 	}
 	return selectUser, nil
 }
 
-func (s *UserService) ChangePassword(userId *string, password *model.ChangePasswordRequest) (*Entities.User, error) {
-	selectUser, err := s.userRepo.GetByID(userId)
+func (s *UserService) ChangePassword(UserID *string, password *model.ChangePasswordRequest) (*Entities.User, error) {
+	selectUser, err := s.userRepo.GetByID(UserID)
 	if err != nil {
 		return &Entities.User{}, err
 	}
@@ -240,8 +240,8 @@ func (s *UserService) GetAll() (*[]Entities.User, error) {
 	return users, nil
 }
 
-func (s *UserService) GetByID(userId *string) (*Entities.User, error) {
-	user, err := s.userRepo.GetByID(userId)
+func (s *UserService) GetByID(UserID *string) (*Entities.User, error) {
+	user, err := s.userRepo.GetByID(UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -256,6 +256,6 @@ func (s *UserService) GetByEmailOrUsername(user *Entities.User) (*Entities.User,
 	return selectUser, nil
 }
 
-func (s *UserService) Delete(userId *string) error {
-	return s.userRepo.Delete(userId)
+func (s *UserService) Delete(UserID *string) error {
+	return s.userRepo.Delete(UserID)
 }
