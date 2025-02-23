@@ -1,20 +1,22 @@
 package orderAdepter
 
 import (
-	"github.com/google/uuid"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	orderUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order"
+	statusUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/status"
 	"gorm.io/gorm"
 )
 
 type OrderDriver struct {
-	db *gorm.DB
+	db         *gorm.DB
+	statusRepo statusUsecase.StatusUsecase
 }
 
-func NewOrderDriver(db *gorm.DB) orderUsecase.OrderRepository {
+func NewOrderDriver(db *gorm.DB, statusRepo statusUsecase.StatusUsecase) orderUsecase.OrderRepository {
 	return &OrderDriver{
-		db: db,
+		db:         db,
+		statusRepo: statusRepo,
 	}
 }
 
@@ -76,14 +78,6 @@ func (d *OrderDriver) Delete(id *string) error {
 	return nil
 }
 
-func (d *OrderDriver) GetStatusIDByName(name string) (uuid.UUID, error) {
-	var status Entities.Status
-	if err := d.db.Where("name = ?", name).First(&status).Error; err != nil {
-		return uuid.Nil, err
-	}
-	return status.ID, nil
-}
-
 func (d *OrderDriver) GetAndUpdateByChargeID(chargeID string) error {
 	var selectOrder Entities.Order
 	if err := d.db.Joins("JOIN transactions ON transactions.id = orders.transaction_id").
@@ -91,13 +85,13 @@ func (d *OrderDriver) GetAndUpdateByChargeID(chargeID string) error {
 		First(&selectOrder).Error; err != nil {
 		return err
 	}
-
-	processingStatusID, err := d.GetStatusIDByName("processing")
+	var status = "processing"
+	processingOrder, err := d.statusRepo.GetStatusByName(&status)
 	if err != nil {
 		return err
 	}
 
-	selectOrder.StatusID = processingStatusID
+	selectOrder.StatusID = processingOrder.ID
 	if err := d.db.Save(&selectOrder).Error; err != nil {
 		return err
 	}

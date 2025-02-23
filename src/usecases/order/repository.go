@@ -1,7 +1,6 @@
 package orderUsecase
 
 import (
-	"github.com/google/uuid"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 )
@@ -14,6 +13,5 @@ type OrderRepository interface {
 	Delete(id *string) error
 	GetByStatusName(status *string, config *model.Pagination) ([]*Entities.Order, int64, error)
 	GetDefaultStatus() (*Entities.Status, error)
-	GetStatusIDByName(name string) (uuid.UUID, error)
 	GetAndUpdateByChargeID(chargeID string) error
 }

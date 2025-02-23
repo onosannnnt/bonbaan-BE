@@ -4,13 +4,18 @@ import (
 	"github.com/gofiber/fiber/v2"
 	orderAdepter "github.com/onosannnnt/bonbaan-BE/src/adepters/order"
 	serviceAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/service"
+	statusAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/status"
 	orderUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order"
+	statusUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/status"
 	"gorm.io/gorm"
 )
 
 func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 
-	orderRepo := orderAdepter.NewOrderDriver(db)
+	statusRepo := statusAdapter.NewStatusDriver(db)
+	statusUsecase := statusUsecase.NewStatusService(statusRepo)
+
+	orderRepo := orderAdepter.NewOrderDriver(db, statusUsecase)
 	serviceRepo := serviceAdapter.NewServiceDriver(db)
 	orderUsecase := orderUsecase.NewOrderService(orderRepo, serviceRepo)
 	orderHandler := orderAdepter.NewOrderHandler(orderUsecase)
