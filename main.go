@@ -38,7 +38,12 @@ func main() {
 		BodyLimit: math.MaxInt64,
 	})
 
-	app.Use(cors.New())
+	app.Use(cors.New(
+		cors.Config{
+			AllowOrigins: "*",
+			AllowHeaders: "Origin, Content-Type, Accept",
+		},
+	))
 
 	router.InitUserRouter(app, db)
 	router.InitRoleRouter(app, db)
