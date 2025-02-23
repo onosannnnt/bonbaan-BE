@@ -12,13 +12,13 @@ type Role struct {
 	Role string    `json:"role"`
 }
 
-func InitializeData(db *gorm.DB) error {
+func InitializeRoleData(db *gorm.DB) error {
 	roles := []Role{
+		{Role: constance.User_Role_ctx},
 		{Role: constance.Admin_Role_ctx},
-		{Role: "user"},
 	}
 	for _, role := range roles {
-		if err := db.FirstOrCreate(&role).Error; err != nil {
+		if err := db.FirstOrCreate(&role, Role{Role: role.Role}).Error; err != nil {
 			return err
 		}
 	}

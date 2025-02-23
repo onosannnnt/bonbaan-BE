@@ -179,3 +179,14 @@ func (h *UserHandler) Delete(c *fiber.Ctx) error {
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
 
 }
+
+func (h *UserHandler) AdminRegister(c *fiber.Ctx) error {
+	user := model.CreateUserRequest{}
+	if err := c.BodyParser(&user); err != nil {
+		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
+	}
+	if err := h.userUsecase.AdminRegister(&user); err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
+}

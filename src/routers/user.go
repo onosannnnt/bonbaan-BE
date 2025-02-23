@@ -6,6 +6,7 @@ import (
 	// "github.com/onosannnnt/bonbaan-BE/src/config"
 	otpDriver "github.com/onosannnnt/bonbaan-BE/src/adepters/otp"
 	resetpasswordDriver "github.com/onosannnnt/bonbaan-BE/src/adepters/reset_password"
+	roleAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/role"
 	userAdepter "github.com/onosannnnt/bonbaan-BE/src/adepters/user"
 	userUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/user"
 	"github.com/onosannnnt/bonbaan-BE/src/utils/middleware"
@@ -16,8 +17,9 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 
 	userRepo := userAdepter.NewUserDriver(db)
 	otpRepo := otpDriver.NewOtpDriver(db)
+	roleRepo := roleAdapter.NewRoleDriver(db)
 	resetPasswordRepo := resetpasswordDriver.NewOtpDriver(db)
-	userUsecase := userUsecase.NewUserService(userRepo, otpRepo, resetPasswordRepo)
+	userUsecase := userUsecase.NewUserService(userRepo, otpRepo, resetPasswordRepo, roleRepo)
 	userHandler := userAdepter.NewUserHandler(userUsecase)
 
 	user := app.Group("/users")
@@ -37,5 +39,10 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 	protect.Delete("/", userHandler.Delete)
 	protect.Patch("/change-password", userHandler.ChangePassword)
 	protect.Patch("/", userHandler.Update)
+
+	admin := protect.Group("/")
+	admin.Use(middleware.IsAdmin)
+
+	admin.Post("/admin-register", userHandler.AdminRegister)
 
 }

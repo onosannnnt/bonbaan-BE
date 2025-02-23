@@ -10,6 +10,7 @@ import (
 	"github.com/onosannnnt/bonbaan-BE/src/constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
+	roleUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/role"
 	"github.com/onosannnnt/bonbaan-BE/src/utils"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
@@ -29,6 +30,7 @@ type UserUsecase interface {
 	GetByEmailOrUsername(user *Entities.User) (*Entities.User, error)
 	Delete(UserID *string) error
 	Update(user *model.UpdateRequest) (*Entities.User, error)
+	AdminRegister(user *model.CreateUserRequest) error
 }
 
 // ส่วนที่ต่อกับ driver handler
@@ -36,14 +38,16 @@ type UserService struct {
 	userRepo          UserRepository
 	otpRepo           OtpRepository
 	resetPasswordRepo ResetPasswordRepository
+	roleRepo          roleUsecase.RoleRepository
 }
 
 // สร้าง instance ของ UserService
-func NewUserService(userRepo UserRepository, otpRepo OtpRepository, resetPasswordRepo ResetPasswordRepository) UserUsecase {
+func NewUserService(userRepo UserRepository, otpRepo OtpRepository, resetPasswordRepo ResetPasswordRepository, roleRepo roleUsecase.RoleRepository) UserUsecase {
 	return &UserService{
 		userRepo:          userRepo,
 		otpRepo:           otpRepo,
 		resetPasswordRepo: resetPasswordRepo,
+		roleRepo:          roleRepo,
 	}
 }
 
@@ -83,6 +87,10 @@ func (s *UserService) Register(user *model.CreateUserRequest) error {
 	if err != nil {
 		return err
 	}
+	role, err := s.roleRepo.GetByName(&constance.User_Role_ctx)
+	if err != nil {
+		return err
+	}
 	verifyUser := &Entities.User{
 		Username:  user.Username,
 		Firstname: user.Firstname,
@@ -90,7 +98,7 @@ func (s *UserService) Register(user *model.CreateUserRequest) error {
 		Email:     user.Email,
 		Password:  string(hashPassword),
 		Phone:     user.Phone,
-		RoleID:    user.RoleID,
+		RoleID:    role.ID,
 	}
 	return s.userRepo.Insert(verifyUser)
 }
@@ -258,4 +266,25 @@ func (s *UserService) GetByEmailOrUsername(user *Entities.User) (*Entities.User,
 
 func (s *UserService) Delete(UserID *string) error {
 	return s.userRepo.Delete(UserID)
+}
+
+func (s *UserService) AdminRegister(user *model.CreateUserRequest) error {
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	role, err := s.roleRepo.GetByName(&constance.Admin_Role_ctx)
+	if err != nil {
+		return err
+	}
+	verifyUser := &Entities.User{
+		Username:  user.Username,
+		Firstname: user.Firstname,
+		Lastname:  user.Lastname,
+		Email:     user.Email,
+		Password:  string(hashPassword),
+		Phone:     user.Phone,
+		RoleID:    role.ID,
+	}
+	return s.userRepo.Insert(verifyUser)
 }

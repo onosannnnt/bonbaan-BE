@@ -38,7 +38,7 @@ func IsAuth(c *fiber.Ctx) error {
 func IsAdmin(c *fiber.Ctx) error {
 	role, ok := c.Locals(constance.Role_ctx).(string)
 
-	if !ok && role != constance.Admin_Role_ctx {
+	if !ok || role != constance.Admin_Role_ctx {
 		return utils.ResponseJSON(c, fiber.StatusForbidden, "Forbidden", nil, nil)
 	}
 	return c.Next()
