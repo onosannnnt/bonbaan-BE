@@ -12,7 +12,7 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/onosannnnt/bonbaan-BE/src/Config"
+	"github.com/onosannnnt/bonbaan-BE/src/config"
 
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
@@ -30,136 +30,136 @@ func NewServiceHandler(ServiceUsecase ServiceUsecase.ServiceUsecase) *ServiceHan
 }
 
 func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
-    // Parse the multipart form:
-    form, err := c.MultipartForm()
-    if err != nil {
-        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Error parsing form data", err, nil)
-    }
-    // fmt.Println(form.Value)
+	// Parse the multipart form:
+	form, err := c.MultipartForm()
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Error parsing form data", err, nil)
+	}
+	// fmt.Println(form.Value)
 
-    var input model.CreateServiceInput
+	var input model.CreateServiceInput
 
-    // Extract individual fields from form data.
-    if v, exists := form.Value["name"]; exists && len(v) > 0 {
-        input.Name = v[0]
-    } else {
-        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Name is missing", nil, nil)
-    }
-    if v, exists := form.Value["description"]; exists && len(v) > 0 {
-        input.Description = v[0]
-    } else {
-        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Description is missing", nil, nil)
-    }
-    // Optional: parse rate if provided (assumed to be an integer)
-    // Categories should be provided as multiple values.
-    if v, exists := form.Value["categories"]; exists && len(v) > 0 {
-        input.Categories = v
-    } else {
-        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Categories are missing", nil, nil)
-    }
+	// Extract individual fields from form data.
+	if v, exists := form.Value["name"]; exists && len(v) > 0 {
+		input.Name = v[0]
+	} else {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Name is missing", nil, nil)
+	}
+	if v, exists := form.Value["description"]; exists && len(v) > 0 {
+		input.Description = v[0]
+	} else {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Description is missing", nil, nil)
+	}
+	// Optional: parse rate if provided (assumed to be an integer)
+	// Categories should be provided as multiple values.
+	if v, exists := form.Value["categories"]; exists && len(v) > 0 {
+		input.Categories = v
+	} else {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Categories are missing", nil, nil)
+	}
 
-    // Parse packages as a JSON string.
-    if v, exists := form.Value["packages"]; exists && len(v) > 0 {
+	// Parse packages as a JSON string.
+	if v, exists := form.Value["packages"]; exists && len(v) > 0 {
 		// fmt.Println(v[0])
 		// type of v[0]
 		// fmt.Printf("%T\n", v[0])
-        if err := json.Unmarshal([]byte(v[0]), &input.Packages); err != nil {
-            return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid packages data", err, nil)
-        }
-    } else {
-        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Packages data is missing", nil, nil)
-    }
+		if err := json.Unmarshal([]byte(v[0]), &input.Packages); err != nil {
+			return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid packages data", err, nil)
+		}
+	} else {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Packages data is missing", nil, nil)
+	}
 
-    // Create the service entity.
-    service := Entities.Service{	
-        Name:        input.Name,
-        Description: input.Description,
-    }
+	// Create the service entity.
+	service := Entities.Service{
+		Name:        input.Name,
+		Description: input.Description,
+	}
 
-    // Map category IDs to category objects.
-    for _, catID := range input.Categories {
+	// Map category IDs to category objects.
+	for _, catID := range input.Categories {
 		fmt.Println(catID)
-        uid, err := uuid.Parse(catID)
-        if err != nil {
-            return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid category id", err, nil)
-        }
-        service.Categories = append(service.Categories, Entities.Category{ID: uid})
-    }
+		uid, err := uuid.Parse(catID)
+		if err != nil {
+			return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid category id", err, nil)
+		}
+		service.Categories = append(service.Categories, Entities.Category{ID: uid})
+	}
 
-    // Map packages to the service.
-    for _, pkgInput := range input.Packages {
-        pkg := Entities.Package{
-            Name:        pkgInput.Name,
-            Item:        pkgInput.Item,
-            Price:       pkgInput.Price,
-            Description: pkgInput.Description,
-        }
-        service.Packages = append(service.Packages, pkg)
-    }
+	// Map packages to the service.
+	for _, pkgInput := range input.Packages {
+		pkg := Entities.Package{
+			Name:        pkgInput.Name,
+			Item:        pkgInput.Item,
+			Price:       pkgInput.Price,
+			Description: pkgInput.Description,
+		}
+		service.Packages = append(service.Packages, pkg)
+	}
 
-    // Retrieve files from the "attachments" form field.
-    files := form.File["attachments"]
-    if len(files) == 0 {
-        return c.Status(fiber.StatusBadRequest).SendString("No attachments provided")
-    }
+	// Retrieve files from the "attachments" form field.
+	files := form.File["attachments"]
+	if len(files) == 0 {
+		return c.Status(fiber.StatusBadRequest).SendString("No attachments provided")
+	}
 
-    // Check if we are in test mode.
-    if os.Getenv("TEST_MODE") == "true" {
-        for range files {
-            service.Attachments = append(service.Attachments, Entities.Attachment{URL: "http://dummy-url"})
-        }
-    } else {
-        // Initialize the Cloud Storage client using the service account credentials.
-        ctx := context.Background()
-        client, err := storage.NewClient(ctx, option.WithCredentialsFile(Config.BucketKey))
-        if err != nil {
-            return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to create storage client", err, nil)
-        }
-        defer client.Close()
+	// Check if we are in test mode.
+	if os.Getenv("TEST_MODE") == "true" {
+		for range files {
+			service.Attachments = append(service.Attachments, Entities.Attachment{URL: "http://dummy-url"})
+		}
+	} else {
+		// Initialize the Cloud Storage client using the service account credentials.
+		ctx := context.Background()
+		client, err := storage.NewClient(ctx, option.WithCredentialsFile(config.BucketKey))
+		if err != nil {
+			return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to create storage client", err, nil)
+		}
+		defer client.Close()
 
-        bucketName := Config.BucketName
-        shareableURLs := make([]string, 0, len(files))
+		bucketName := config.BucketName
+		shareableURLs := make([]string, 0, len(files))
 
-        for _, fileHeader := range files {
-            file, err := fileHeader.Open()
-            if err != nil {
-                return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Error opening file", err, nil)
-            }
+		for _, fileHeader := range files {
+			file, err := fileHeader.Open()
+			if err != nil {
+				return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Error opening file", err, nil)
+			}
 
-            objectName := fmt.Sprintf("images/%d_%s", time.Now().UnixNano(), fileHeader.Filename)
-            token := uuid.New().String()
+			objectName := fmt.Sprintf("images/%d_%s", time.Now().UnixNano(), fileHeader.Filename)
+			token := uuid.New().String()
 
-            wc := client.Bucket(bucketName).Object(objectName).NewWriter(ctx)
-            wc.Metadata = map[string]string{
-                "firebaseStorageDownloadTokens": token,
-            }
+			wc := client.Bucket(bucketName).Object(objectName).NewWriter(ctx)
+			wc.Metadata = map[string]string{
+				"firebaseStorageDownloadTokens": token,
+			}
 
-            if _, err = io.Copy(wc, file); err != nil {
-                file.Close()
-                wc.Close()
-                return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to write file to bucket", err, nil)
-            }
-            file.Close()
-            if err := wc.Close(); err != nil {
-                return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to close writer", err, nil)
-            }
+			if _, err = io.Copy(wc, file); err != nil {
+				file.Close()
+				wc.Close()
+				return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to write file to bucket", err, nil)
+			}
+			file.Close()
+			if err := wc.Close(); err != nil {
+				return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to close writer", err, nil)
+			}
 
-            shareableURL := fmt.Sprintf("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
-                bucketName, url.QueryEscape(objectName), token)
-            shareableURLs = append(shareableURLs, shareableURL)
-        }
+			shareableURL := fmt.Sprintf("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
+				bucketName, url.QueryEscape(objectName), token)
+			shareableURLs = append(shareableURLs, shareableURL)
+		}
 
-        for _, imgURL := range shareableURLs {
-            service.Attachments = append(service.Attachments, Entities.Attachment{URL: imgURL})
-        }
-    }
+		for _, imgURL := range shareableURLs {
+			service.Attachments = append(service.Attachments, Entities.Attachment{URL: imgURL})
+		}
+	}
 
-    // Create the service using the use case.
-    if err := h.ServiceUsecase.CreateService(&service); err != nil {
-        return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
-    }
+	// Create the service using the use case.
+	if err := h.ServiceUsecase.CreateService(&service); err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
 
-    return utils.ResponseJSON(c, fiber.StatusCreated, "Success", nil, service)
+	return utils.ResponseJSON(c, fiber.StatusCreated, "Success", nil, service)
 }
 
 func (h *ServiceHandler) GetAllServices(c *fiber.Ctx) error {

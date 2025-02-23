@@ -52,7 +52,6 @@ func (d *ServiceDriver) GetPackagebyServiceID(serviceID *string) (*[]Entities.Pa
 	return &packages, nil
 }
 
-
 func (d *ServiceDriver) Update(service *Entities.Service) error {
 	if err := d.db.Model(&Entities.Service{}).Where("id = ?", service.ID).Updates(service).Error; err != nil {
 		return err

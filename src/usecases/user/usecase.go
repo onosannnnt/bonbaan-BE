@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/onosannnnt/bonbaan-BE/src/Config"
 	"github.com/onosannnnt/bonbaan-BE/src/Constance"
+	"github.com/onosannnnt/bonbaan-BE/src/config"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	"github.com/onosannnnt/bonbaan-BE/src/utils"
@@ -112,7 +112,7 @@ func (s *UserService) Login(user *Entities.User) (*string, error) {
 		"exp":                  time.Now().Add(time.Hour * 24 * 3).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(Config.JwtSecret))
+	tokenString, err := token.SignedString([]byte(config.JwtSecret))
 	if err != nil {
 		return nil, err
 	}

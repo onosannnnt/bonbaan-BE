@@ -5,7 +5,7 @@ import (
 
 	"github.com/omise/omise-go"
 	"github.com/omise/omise-go/operations"
-	"github.com/onosannnnt/bonbaan-BE/src/Config"
+	"github.com/onosannnnt/bonbaan-BE/src/config"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	serviceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
@@ -38,7 +38,7 @@ func (s *OrderService) Insert(order *Entities.Order) (*Entities.Order, error) {
 	if err != nil {
 		return nil, err
 	}
-	client, err := omise.NewClient(Config.OmisePublicKey, Config.OmiseSecretKey)
+	client, err := omise.NewClient(config.OmisePublicKey, config.OmiseSecretKey)
 	if err != nil {
 		return nil, err
 	}

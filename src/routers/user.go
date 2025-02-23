@@ -3,7 +3,7 @@ package router
 import (
 	// jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
-	// "github.com/onosannnnt/bonbaan-BE/src/Config"
+	// "github.com/onosannnnt/bonbaan-BE/src/config"
 	otpDriver "github.com/onosannnnt/bonbaan-BE/src/adepters/otp"
 	resetpasswordDriver "github.com/onosannnnt/bonbaan-BE/src/adepters/reset_password"
 	userAdepter "github.com/onosannnnt/bonbaan-BE/src/adepters/user"
@@ -29,7 +29,7 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 
 	protect := user.Group("/")
 	protect.Use(middleware.IsAuth)
-	
+
 	protect.Get("/me", userHandler.Me)
 	protect.Get("/", userHandler.GetAll)
 	protect.Get("/:id", userHandler.GetByID)

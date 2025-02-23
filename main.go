@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 
-	"github.com/onosannnnt/bonbaan-BE/src/Config"
+	"github.com/onosannnnt/bonbaan-BE/src/config"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	router "github.com/onosannnnt/bonbaan-BE/src/routers"
 	"gorm.io/driver/postgres"
@@ -17,7 +17,7 @@ import (
 func main() {
 	// image_upload()
 	// Connect to database
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", Config.DbHost, Config.DbPort, Config.DbUser, Config.DbPassword, Config.DbSchema)
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", config.DbHost, config.DbPort, config.DbUser, config.DbPassword, config.DbSchema)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	// Postgres install uuid-ossp extension
@@ -54,7 +54,7 @@ func main() {
 	router.InitPackageRouter(app, db)
 	router.InitCategoryRouter(app, db)
 	router.InitAttachmentRouter(app, db)
-	app.Listen(":" + Config.Port)
+	app.Listen(":" + config.Port)
 
 }
 

@@ -4,14 +4,14 @@ import (
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/onosannnnt/bonbaan-BE/src/Config"
 	"github.com/onosannnnt/bonbaan-BE/src/Constance"
+	"github.com/onosannnnt/bonbaan-BE/src/config"
 	"github.com/onosannnnt/bonbaan-BE/src/utils"
 )
 
 func IsAuth(c *fiber.Ctx) error {
 	jwtware.New(jwtware.Config{
-		SigningKey: jwtware.SigningKey{Key: []byte(Config.JwtSecret)},
+		SigningKey: jwtware.SigningKey{Key: []byte(config.JwtSecret)},
 		ContextKey: "jwt",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return utils.ResponseJSON(c, fiber.StatusForbidden, "Unauthorized", err, nil)
@@ -22,7 +22,7 @@ func IsAuth(c *fiber.Ctx) error {
 		authHeader = authHeader[len("Bearer "):]
 	}
 	token, err := jwt.ParseWithClaims(authHeader, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(Config.JwtSecret), nil
+		return []byte(config.JwtSecret), nil
 	})
 	if err != nil || !token.Valid {
 		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "Unauthorized", err, nil)
