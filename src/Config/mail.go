@@ -3,8 +3,6 @@ package Config
 import (
 	"log"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strconv"
 
 	"github.com/joho/godotenv"
@@ -18,23 +16,7 @@ var (
 )
 
 func init() {
-	_, filename, _, _ := runtime.Caller(0)
-	currentFileDir := filepath.Dir(filename)
-
-	// Walk up the directory tree to find the .env file
-	var configPath string
-	for {
-		configPath = filepath.Join(currentFileDir, ".env")
-		if _, err := os.Stat(configPath); !os.IsNotExist(err) {
-			break
-		}
-		parentDir := filepath.Dir(currentFileDir)
-		if parentDir == currentFileDir {
-			log.Fatalf(".env file not found")
-			os.Exit(-1)
-		}
-		currentFileDir = parentDir
-	}
+	configPath := Initenv()
 
 	// Load the .env file
 	err := godotenv.Load(configPath)
@@ -42,6 +24,7 @@ func init() {
 		log.Fatalf("Problem loading .env file: %v", err)
 		os.Exit(-1)
 	}
+
 	mailport := os.Getenv("MAIL_PORT")
 	MailHost = os.Getenv("MAIL_HOST")
 	MailPort, err = strconv.Atoi(mailport)
