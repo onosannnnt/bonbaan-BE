@@ -23,14 +23,6 @@ func (d *resetPasswordDriver) Insert(resetPassword *Entities.ResetPassword) erro
 	return nil
 }
 
-func (d *resetPasswordDriver) GetByEmail(id *string) (*Entities.ResetPassword, error) {
-	var selectResetPassword Entities.ResetPassword
-	if err := d.db.Where("user_id = ?", id).First(&selectResetPassword).Error; err != nil {
-		return nil, err
-	}
-	return &selectResetPassword, nil
-}
-
 func (d *resetPasswordDriver) GetByID(id *string, token *string) (*Entities.ResetPassword, error) {
 	var selectResetPassword Entities.ResetPassword
 	if err := d.db.Preload("User").Where("user_id = ? ", id).First(&selectResetPassword).Error; err != nil {

@@ -20,7 +20,6 @@ type OtpRepository interface {
 
 type ResetPasswordRepository interface {
 	Insert(resetPassword *Entities.ResetPassword) error
-	GetByEmail(id *string) (*Entities.ResetPassword, error)
 	GetByID(id *string, token *string) (*Entities.ResetPassword, error)
 	DeleteByID(id *string) error
 }
