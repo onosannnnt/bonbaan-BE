@@ -6,5 +6,5 @@ type Pagination struct {
 	CurrentPage  int    `json:"currentPage"`
 	TotalPages   int    `json:"totalPages"`
 	TotalRecords int    `json:"totalRecords"`
-	OrderBy      string `json:"orderBy"`
+	Search       string `json:"search"`
 }
