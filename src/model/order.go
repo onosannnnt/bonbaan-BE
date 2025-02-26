@@ -1,5 +1,7 @@
 package model
 
+import Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
+
 // type JSONB json.RawMessage
 
 type OrderInsertRequest struct {
@@ -17,4 +19,9 @@ type ChargeEvent struct {
 		ID     string `json:"id"`
 		Status string `json:"status"`
 	} `json:"data"`
+}
+
+type ConfirmOrderRequest struct {
+	OrderID     string                `json:"orderID"`
+	Attachments []Entities.Attachment `json:"attachments,omitempty"`
 }

@@ -17,7 +17,7 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 
 	orderRepo := orderAdepter.NewOrderDriver(db, statusUsecase)
 	serviceRepo := serviceAdapter.NewServiceDriver(db)
-	orderUsecase := orderUsecase.NewOrderService(orderRepo, serviceRepo)
+	orderUsecase := orderUsecase.NewOrderService(orderRepo, serviceRepo, statusRepo)
 	orderHandler := orderAdepter.NewOrderHandler(orderUsecase)
 
 	order := app.Group("/orders")
@@ -27,4 +27,7 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	order.Patch("/:id", orderHandler.Update)
 	order.Delete("/:id", orderHandler.Delete)
 	order.Post("/webhook", orderHandler.Hook)
+	order.Post("/cancel/:id", orderHandler.CancleOrder)
+	order.Post("/accept/:id", orderHandler.AcceptOrder)
+	order.Post("/confirm", orderHandler.ConfirmOrder)
 }
