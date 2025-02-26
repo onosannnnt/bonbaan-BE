@@ -1,6 +1,7 @@
 package orderAdepter
 
 import (
+	"github.com/google/uuid"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	orderUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order"
@@ -99,7 +100,7 @@ func (d *OrderDriver) GetAndUpdateByChargeID(chargeID string) error {
 	return nil
 }
 
-func (d *OrderDriver) GetByStatusName(status *string, config *model.Pagination) ([]*Entities.Order, int64, error) {
+func (d *OrderDriver) GetByStatusID(status *uuid.UUID, config *model.Pagination) ([]*Entities.Order, int64, error) {
 	var selectOrder []*Entities.Order
 	var totalRecords int64
 
@@ -110,7 +111,7 @@ func (d *OrderDriver) GetByStatusName(status *string, config *model.Pagination) 
 		return db.Omit("password")
 
 	}).Preload("Service").Joins("JOIN statuses ON statuses.id = orders.status_id").
-		Where("statuses.name = ?", &status).
+		Where("statuses.id = ?", &status).
 		Limit(config.PageSize).Offset((config.CurrentPage - 1) * config.PageSize).Find(&selectOrder).Error; err != nil {
 		return nil, 0, err
 	}

@@ -3,6 +3,7 @@ package orderUsecase
 import (
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/omise/omise-go"
 	"github.com/omise/omise-go/operations"
 	"github.com/onosannnnt/bonbaan-BE/src/config"
@@ -15,7 +16,7 @@ type OrderUsecase interface {
 	Insert(order *Entities.Order) (*Entities.Order, error)
 	GetAll(config *model.Pagination) ([]*Entities.Order, *model.Pagination, error)
 	GetByID(id *string) (*Entities.Order, error)
-	GetByStatus(status *string, config *model.Pagination) ([]*Entities.Order, *model.Pagination, error)
+	GetByStatus(statusID *uuid.UUID, config *model.Pagination) ([]*Entities.Order, *model.Pagination, error)
 	Update(id *string, order *Entities.Order) error
 	Delete(id *string) error
 	Hook(id *string) error
@@ -116,14 +117,14 @@ func (s *OrderService) GetByID(id *string) (*Entities.Order, error) {
 	return s.orderRepo.GetByID(id)
 }
 
-func (s *OrderService) GetByStatus(status *string, config *model.Pagination) ([]*Entities.Order, *model.Pagination, error) {
+func (s *OrderService) GetByStatus(statusID *uuid.UUID, config *model.Pagination) ([]*Entities.Order, *model.Pagination, error) {
 	if config.PageSize <= 0 {
 		config.PageSize = 10
 	}
 	if config.CurrentPage <= 0 {
 		config.CurrentPage = 1
 	}
-	orders, totalRecords, err := s.orderRepo.GetByStatusName(status, config)
+	orders, totalRecords, err := s.orderRepo.GetByStatusID(statusID, config)
 	if err != nil {
 		return nil, nil, err
 	}
