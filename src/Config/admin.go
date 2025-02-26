@@ -7,9 +7,9 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var Port string
-var BucketName string
-var BucketKey string
+var AdminEmail string
+var AdminUsername string
+var AdminPassword string
 
 func init() {
 	configPath := Initenv()
@@ -21,7 +21,7 @@ func init() {
 		os.Exit(-1)
 	}
 
-	Port = os.Getenv("PORT")
-	BucketName = os.Getenv("BUCKET_NAME")
-	BucketKey = os.Getenv("BUCKET_KEY")
+	AdminEmail = os.Getenv("ADMIN_EMAIL")
+	AdminUsername = os.Getenv("ADMIN_USERNAME")
+	AdminPassword = os.Getenv("ADMIN_PASSWORD")
 }

@@ -23,9 +23,9 @@ func (d *resetPasswordDriver) Insert(resetPassword *Entities.ResetPassword) erro
 	return nil
 }
 
-func (d *resetPasswordDriver) GetByToken(id *string, token *string) (*Entities.ResetPassword, error) {
+func (d *resetPasswordDriver) GetByID(id *string, token *string) (*Entities.ResetPassword, error) {
 	var selectResetPassword Entities.ResetPassword
-	if err := d.db.Preload("User").Where("user_id = ? AND reset_password = ?", id, token).First(&selectResetPassword).Error; err != nil {
+	if err := d.db.Preload("User").Where("user_id = ? ", id).First(&selectResetPassword).Error; err != nil {
 		return nil, err
 	}
 	return &selectResetPassword, nil

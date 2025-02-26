@@ -1,9 +1,5 @@
 package model
 
-type OrderGetAll struct {
-	Page  int
-	Count int
-}
 // type JSONB json.RawMessage
 
 type OrderInsertRequest struct {
@@ -14,4 +10,11 @@ type OrderInsertRequest struct {
 	StatusID           string `json:"statusID"`
 	ServiceID          string `json:"serviceID"`
 	Deadline           string `json:"deadline"`
+}
+
+type ChargeEvent struct {
+	Data struct {
+		ID     string `json:"id"`
+		Status string `json:"status"`
+	} `json:"data"`
 }

@@ -5,7 +5,16 @@ import (
 )
 
 func InitEntity(db *gorm.DB) error {
-	if err := db.AutoMigrate(&User{}, &Role{}, &Order{}, &Service{}, &Status{}, &Order{},&Package{} ,&Otp{}, &ResetPassword{},&Category{} ,&Attachment{} ); err != nil {
+	if err := db.AutoMigrate(&User{}, &Role{}, &Order{}, &Service{}, &Status{}, &Order{}, &Package{}, &Otp{}, &ResetPassword{}, &Category{}, &Attachment{}, &Transaction{}); err != nil {
+		panic(err)
+	}
+	if err := InitializeRoleData(db); err != nil {
+		panic(err)
+	}
+	if err := InitializeStatusData(db); err != nil {
+		panic(err)
+	}
+	if err := InitializeUserData(db); err != nil {
 		panic(err)
 	}
 	return nil

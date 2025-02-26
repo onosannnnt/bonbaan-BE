@@ -23,7 +23,7 @@ func (d *StatusDriver) Insert(status *Entities.Status) error {
 	return nil
 }
 
-func (d *StatusDriver) FindStatusByID(id *string) (*Entities.Status, error) {
+func (d *StatusDriver) GetByID(id *string) (*Entities.Status, error) {
 	var selectStatus Entities.Status
 	if err := d.db.Where("id = ?", id).First(&selectStatus).Error; err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (d *StatusDriver) FindStatusByID(id *string) (*Entities.Status, error) {
 	return &selectStatus, nil
 }
 
-func (d *StatusDriver) FindStatusByName(name *string) (*Entities.Status, error) {
+func (d *StatusDriver) GetByName(name *string) (*Entities.Status, error) {
 	var selectStatus Entities.Status
 	if err := d.db.Where("name = ?", name).First(&selectStatus).Error; err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (d *StatusDriver) FindStatusByName(name *string) (*Entities.Status, error) 
 	return &selectStatus, nil
 }
 
-func (d *StatusDriver) FindAll() ([]*Entities.Status, error) {
+func (d *StatusDriver) GetAll() ([]*Entities.Status, error) {
 	var selectStatus []*Entities.Status
 	if err := d.db.Find(&selectStatus).Error; err != nil {
 		return nil, err

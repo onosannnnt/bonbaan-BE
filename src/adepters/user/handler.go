@@ -2,6 +2,7 @@ package userAdepter
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/onosannnnt/bonbaan-BE/src/constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	userUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/user"
@@ -71,7 +72,7 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 }
 
 func (h *UserHandler) Me(c *fiber.Ctx) error {
-	userID := c.Get("UserID")
+	userID := c.Locals(constance.UserID_ctx).(string)
 	if userID == "" {
 		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
 	}
@@ -87,14 +88,13 @@ func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 	if err := c.BodyParser(&changePasswordRequest); err != nil {
 		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
 	}
-	// userId := c.Locals(Constance.UserID_ctx).(string)
-	userId := c.Get("UserID")
-	if userId == "" {
+	UserID := c.Locals(constance.UserID_ctx).(string)
+	if UserID == "" {
 		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
 	}
-	user, err := h.userUsecase.ChangePassword(&userId, &changePasswordRequest)
+	user, err := h.userUsecase.ChangePassword(&UserID, &changePasswordRequest)
 	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, err.Error(), err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, user)
 }
@@ -150,12 +150,11 @@ func (h *UserHandler) GetByEmailOrUsername(c *fiber.Ctx) error {
 
 func (h *UserHandler) Update(c *fiber.Ctx) error {
 	var user model.UpdateRequest
+
 	if err := c.BodyParser(&user); err != nil {
 		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
 	}
-
-	// userID, ok := c.Locals(Constance.UserID_ctx).(string)
-	userID := c.Get("UserID")
+	userID := c.Locals(constance.UserID_ctx).(string)
 	if userID == "" {
 		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
 	}
@@ -169,8 +168,7 @@ func (h *UserHandler) Update(c *fiber.Ctx) error {
 }
 
 func (h *UserHandler) Delete(c *fiber.Ctx) error {
-	// userID := c.Locals(Constance.UserID_ctx).(string)
-	userID := c.Get("UserID")
+	userID := c.Locals(constance.UserID_ctx).(string)
 	if userID == "" {
 		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
 	}
@@ -180,4 +178,15 @@ func (h *UserHandler) Delete(c *fiber.Ctx) error {
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
 
+}
+
+func (h *UserHandler) AdminRegister(c *fiber.Ctx) error {
+	user := model.CreateUserRequest{}
+	if err := c.BodyParser(&user); err != nil {
+		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
+	}
+	if err := h.userUsecase.AdminRegister(&user); err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
 }

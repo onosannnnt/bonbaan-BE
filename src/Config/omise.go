@@ -7,9 +7,10 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var Port string
-var BucketName string
-var BucketKey string
+var (
+	OmisePublicKey string
+	OmiseSecretKey string
+)
 
 func init() {
 	configPath := Initenv()
@@ -20,8 +21,6 @@ func init() {
 		log.Fatalf("Problem loading .env file: %v", err)
 		os.Exit(-1)
 	}
-
-	Port = os.Getenv("PORT")
-	BucketName = os.Getenv("BUCKET_NAME")
-	BucketKey = os.Getenv("BUCKET_KEY")
+	OmisePublicKey = os.Getenv("OMISE_PUBLIC_KEY")
+	OmiseSecretKey = os.Getenv("OMISE_SECRET_KEY")
 }

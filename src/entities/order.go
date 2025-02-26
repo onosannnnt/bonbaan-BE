@@ -12,7 +12,7 @@ type JSON json.RawMessage
 
 type Order struct {
 	gorm.Model
-	ID                 uuid.UUID                 `gorm:"primaryKey;default:(uuid_generate_v4())"`
+	ID                 uuid.UUID              `gorm:"primaryKey;default:(uuid_generate_v4())"`
 	CancellationReason string                 `json:"cancellationReason"`
 	Note               string                 `json:"note"`
 	OrderDetail        map[string]interface{} `gorm:"serializer:json;" json:"orderDetail"`
@@ -23,11 +23,6 @@ type Order struct {
 	Status             Status                 `gorm:"foreignKey:StatusID;references:ID"`
 	ServiceID          uuid.UUID              `json:"serviceID"`
 	Service            Service                `gorm:"foreignKey:ServiceID;references:ID"`
+	TransactionID      uuid.UUID              `json:"transactionID"`
+	Transaction        Transaction            `gorm:"foreignKey:TransactionID;references:ID;"`
 }
-
-// func (o *Order) BeforeCreate(tx *gorm.DB) (err error) {
-// 	if o.ID == "" {
-// 		o.ID, err = utils.GenerateRandomID()
-// 	}
-// 	return
-// }

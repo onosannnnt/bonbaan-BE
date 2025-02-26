@@ -2,6 +2,7 @@ package serviceAdapter
 
 import (
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
+	"github.com/onosannnnt/bonbaan-BE/src/model"
 	serviceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
 	"gorm.io/gorm"
 )
@@ -24,12 +25,17 @@ func (d *ServiceDriver) Insert(service *Entities.Service) error {
 	return nil
 }
 
-func (d *ServiceDriver) GetAll() (*[]Entities.Service, error) {
+func (d *ServiceDriver) GetAll(config *model.Pagination) (*[]Entities.Service, int64, error) {
 	var services []Entities.Service
-	if err := d.db.Find(&services).Error; err != nil {
-		return nil, err
+	var totalRecords int64
+	if err := d.db.Model(&Entities.Service{}).Count(&totalRecords).Error; err != nil {
+		return nil, 0, err
 	}
-	return &services, nil
+	if err := d.db.Preload("Package").Order("created_at desc").
+		Limit(config.PageSize).Offset((config.CurrentPage - 1) * config.PageSize).Find(&services).Error; err != nil {
+		return nil, 0, err
+	}
+	return &services, totalRecords, nil
 }
 func (d *ServiceDriver) GetByID(id *string) (*Entities.Service, error) {
 	var service Entities.Service
@@ -45,7 +51,6 @@ func (d *ServiceDriver) GetPackagebyServiceID(serviceID *string) (*[]Entities.Pa
 	}
 	return &packages, nil
 }
-
 
 func (d *ServiceDriver) Update(service *Entities.Service) error {
 	if err := d.db.Model(&Entities.Service{}).Where("id = ?", service.ID).Updates(service).Error; err != nil {
