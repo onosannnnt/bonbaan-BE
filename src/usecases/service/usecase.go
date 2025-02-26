@@ -54,7 +54,7 @@ func mapServiceToOutput(s Entities.Service) model.ServiceOutput {
         Name:        s.Name,
         Description: s.Description,
         Rate:        s.Rate,
-        Adress:      s.Adress,
+        Address:      s.Address,
         Categories:  categories,
         Packages:    packages,
         Attachments: attachments,

@@ -12,7 +12,7 @@ type CreateServiceInput struct {
 	Name          string         `json:"name"`
 	Description   string         `json:"description"`
 	Rate          int            `json:"rate"`
-	Adress        string         `json:"adress"`
+	Address       string         `json:"address"`
 	Categories    []string       `json:"categories"`
 	Packages      []PackageInput `json:"packages"`
 	Attachments   []string       `json:"attachments,omitempty"`
@@ -40,7 +40,7 @@ type ServiceOutput struct {
 	Name          string             `json:"name"`
 	Description   string             `json:"description"`
 	Rate          int                `json:"rate"`
-	Adress        string             `json:"adress"`
+	Address       string             `json:"address"`
 	Categories    []CategoryOutput   `json:"categories"`
 	Packages      []PackageOutput    `json:"packages"`
 	Attachments   []AttachmentOutput `json:"attachments"`

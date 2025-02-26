@@ -12,7 +12,7 @@ type Service struct {
 	Description string    `json:"description"`
 	Name        string    `json:"name"`
 	Rate        int       `json:"rate" gorm:"default:0"`
-	Adress      string    `json:"adress"`
+	Address      string    `json:"address"`
 	Categories []Category `json:"categories" gorm:"many2many:services_categories;"`
 	Packages   []Package  `json:"packages" gorm:"foreignKey:ServiceID"`
 	Attachments []Attachment `json:"attachments" gorm:"foreignKey:ServiceID"`

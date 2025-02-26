@@ -57,10 +57,10 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
     } else {
         return utils.ResponseJSON(c, fiber.StatusBadRequest, "Categories are missing", nil, nil)
     }
-    if v, exists := form.Value["adress"]; exists && len(v) > 0 {
-        input.Adress = v[0]
+    if v, exists := form.Value["address"]; exists && len(v) > 0 {
+        input.Address = v[0]
     } else {
-        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Adress is missing", nil, nil)
+        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Address is missing", nil, nil)
     }
     
 
@@ -81,7 +81,7 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
     service := Entities.Service{	
         Name:        input.Name,
         Description: input.Description,
-        Adress:     input.Adress,
+        Address:     input.Address,
     }
 
     // Map category IDs to category objects.
