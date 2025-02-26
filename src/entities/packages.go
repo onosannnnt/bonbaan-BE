@@ -13,6 +13,8 @@ type Package struct {
 	Price       int `json:"price"`
 	Description string  `json:"description"`
 	ServiceID   uuid.UUID  `json:"service_id"`
+	PackageTypeID uuid.UUID `json:"package_type_id"`
+	PackageType PackageType `gorm:"foreignKey:PackageTypeID ;references:ID"` 
 	// Service     Service `gorm:"foreignKey:ServiceID ;references:ID"`
 
 }

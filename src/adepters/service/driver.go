@@ -1,6 +1,8 @@
 package serviceAdapter
 
 import (
+	"fmt"
+
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	serviceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
@@ -28,15 +30,37 @@ func (d *ServiceDriver) Insert(service *Entities.Service) error {
 func (d *ServiceDriver) GetAll(config *model.Pagination) (*[]Entities.Service, int64, error) {
 	var services []Entities.Service
 	var totalRecords int64
-	if err := d.db.Model(&Entities.Service{}).Count(&totalRecords).Error; err != nil {
+
+	db := d.db.Model(&Entities.Service{})
+
+	if config.Search != "" {
+		search := fmt.Sprintf("%%%s%%", config.Search)
+		db = db.Where("name ILIKE ? OR description ILIKE ?", search, search)
+	}
+
+	if err := db.Count(&totalRecords).Error; err != nil {
 		return nil, 0, err
 	}
-	if err := d.db.Preload("Package").Order("created_at desc").
-		Limit(config.PageSize).Offset((config.CurrentPage - 1) * config.PageSize).Find(&services).Error; err != nil {
+
+	if err := db.
+		Preload("Categories", func(tx *gorm.DB) *gorm.DB {
+			return tx.Omit("created_at", "updated_at", "deleted_at")
+		}).
+		Preload("Packages", func(tx *gorm.DB) *gorm.DB {
+			return tx.Omit("created_at", "updated_at", "deleted_at")
+		}).
+		Preload("Attachments", func(tx *gorm.DB) *gorm.DB {
+			return tx.Omit("created_at", "updated_at", "deleted_at")
+		}).
+		Order("updated_at ASC").
+		Limit(config.PageSize).
+		Offset((config.CurrentPage - 1) * config.PageSize).
+		Find(&services).Error; err != nil {
 		return nil, 0, err
 	}
 	return &services, totalRecords, nil
 }
+
 func (d *ServiceDriver) GetByID(id *string) (*Entities.Service, error) {
 	var service Entities.Service
 	if err := d.db.Where("id = ?", id).First(&service).Error; err != nil {
