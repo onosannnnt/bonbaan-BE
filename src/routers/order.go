@@ -29,5 +29,5 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	order.Post("/webhook", orderHandler.Hook)
 	order.Post("/cancel/:id", orderHandler.CancleOrder)
 	order.Post("/accept/:id", orderHandler.AcceptOrder)
-	order.Post("/confirm", orderHandler.ConfirmOrder)
+	order.Post("/submit", orderHandler.SubmitOrder)
 }

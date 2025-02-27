@@ -164,7 +164,7 @@ func (h *OrderHandler) AcceptOrder(c *fiber.Ctx) error {
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
 }
 
-func (h *OrderHandler) ConfirmOrder(c *fiber.Ctx) error {
+func (h *OrderHandler) SubmitOrder(c *fiber.Ctx) error {
 	form, err := c.MultipartForm()
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Error parsing form data", err, nil)
@@ -230,7 +230,7 @@ func (h *OrderHandler) ConfirmOrder(c *fiber.Ctx) error {
 			input.Attachments = append(input.Attachments, Entities.Attachment{URL: imgURL})
 		}
 	}
-	if err := h.OrderUsecase.ConfirmOrder(&input); err != nil {
+	if err := h.OrderUsecase.SubmitOrder(&input); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to confirm order", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)

@@ -24,7 +24,7 @@ type OrderUsecase interface {
 	Hook(id *string) error
 	CancleOrder(id *string, cancleReason *string) error
 	AcceptOrder(id *string) error
-	ConfirmOrder(order *model.ConfirmOrderRequest) error
+	SubmitOrder(order *model.ConfirmOrderRequest) error
 	CompleteOrder(id *string) error
 }
 
@@ -226,7 +226,7 @@ func (s *OrderService) AcceptOrder(id *string) error {
 	return nil
 }
 
-func (s *OrderService) ConfirmOrder(order *model.ConfirmOrderRequest) error {
+func (s *OrderService) SubmitOrder(order *model.ConfirmOrderRequest) error {
 	orderEntity, err := s.orderRepo.GetByID(&order.OrderID)
 	if err != nil {
 		return err
