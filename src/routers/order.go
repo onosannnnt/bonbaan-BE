@@ -30,4 +30,5 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	order.Post("/cancel/:id", orderHandler.CancleOrder)
 	order.Post("/accept/:id", orderHandler.AcceptOrder)
 	order.Post("/submit", orderHandler.SubmitOrder)
+	order.Post("/complete/:id", orderHandler.CompleteOrder)
 }
