@@ -236,6 +236,7 @@ func (s *OrderService) SubmitOrder(order *model.ConfirmOrderRequest) error {
 		return err
 	}
 	orderEntity.Status = *status
+	orderEntity.Attachments = order.Attachments
 	return s.orderRepo.Update(&order.OrderID, orderEntity)
 }
 

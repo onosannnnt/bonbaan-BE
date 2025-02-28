@@ -7,6 +7,7 @@ import (
 	statusAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/status"
 	orderUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order"
 	statusUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/status"
+	"github.com/onosannnnt/bonbaan-BE/src/utils/middleware"
 	"gorm.io/gorm"
 )
 
@@ -24,11 +25,18 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	order.Post("/", orderHandler.Insert)
 	order.Get("/", orderHandler.GetAll)
 	order.Get("/:id", orderHandler.GetByID)
-	order.Patch("/:id", orderHandler.Update)
-	order.Delete("/:id", orderHandler.Delete)
-	order.Post("/webhook", orderHandler.Hook)
-	order.Post("/cancel/:id", orderHandler.CancleOrder)
-	order.Post("/accept/:id", orderHandler.AcceptOrder)
-	order.Post("/submit", orderHandler.SubmitOrder)
-	order.Post("/complete/:id", orderHandler.CompleteOrder)
+
+	protected := order.Group("/")
+	protected.Use(middleware.IsAuth)
+	protected.Patch("/:id", orderHandler.Update)
+	protected.Delete("/:id", orderHandler.Delete)
+	protected.Post("/webhook", orderHandler.Hook)
+	protected.Post("/cancel/:id", orderHandler.CancleOrder)
+	protected.Post("/submit", orderHandler.SubmitOrder)
+
+	admin := protected.Group("/")
+	admin.Use(middleware.IsAdmin)
+
+	admin.Post("/accept/:id", orderHandler.AcceptOrder)
+	admin.Post("/complete/:id", orderHandler.CompleteOrder)
 }

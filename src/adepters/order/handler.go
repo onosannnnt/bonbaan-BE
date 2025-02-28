@@ -167,6 +167,7 @@ func (h *OrderHandler) AcceptOrder(c *fiber.Ctx) error {
 func (h *OrderHandler) SubmitOrder(c *fiber.Ctx) error {
 	form, err := c.MultipartForm()
 	if err != nil {
+		fmt.Println(err)
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Error parsing form data", err, nil)
 	}
 	var input model.ConfirmOrderRequest
