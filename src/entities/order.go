@@ -25,4 +25,5 @@ type Order struct {
 	Service            Service                `gorm:"foreignKey:ServiceID;references:ID"`
 	TransactionID      uuid.UUID              `json:"transactionID"`
 	Transaction        Transaction            `gorm:"foreignKey:TransactionID;references:ID;"`
+	Attachments        []Attachment           `json:"attachments" gorm:"foreignKey:OrderID"`
 }
