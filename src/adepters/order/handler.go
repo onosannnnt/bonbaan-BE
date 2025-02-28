@@ -64,11 +64,11 @@ func (h *OrderHandler) GetAll(c *fiber.Ctx) error {
 	if err := c.QueryParser(&config); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request query", err, nil)
 	}
-	statusID, err := uuid.Parse(status)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for status", err, nil)
-	}
-	if statusID != uuid.Nil {
+	if status != "" {
+		statusID, err := uuid.Parse(status)
+		if err != nil {
+			return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for status", err, nil)
+		}
 		order, pagination, err := h.OrderUsecase.GetByStatus(&statusID, &config)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
