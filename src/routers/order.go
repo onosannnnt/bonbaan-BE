@@ -33,6 +33,7 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	protected.Post("/webhook", orderHandler.Hook)
 	protected.Post("/cancel/:id", orderHandler.CancleOrder)
 	protected.Post("/submit", orderHandler.SubmitOrder)
+	protected.Post("/custom-order", orderHandler.InsertCustomerOrder)
 
 	admin := protected.Group("/")
 	admin.Use(middleware.IsAdmin)

@@ -1,6 +1,7 @@
 package orderUsecase
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -26,6 +27,7 @@ type OrderUsecase interface {
 	AcceptOrder(id *string) error
 	SubmitOrder(order *model.ConfirmOrderRequest) error
 	CompleteOrder(id *string) error
+	InsertCustomerOrder(order *Entities.Order) (*Entities.Order, error)
 }
 
 type OrderService struct {
@@ -251,4 +253,20 @@ func (s *OrderService) CompleteOrder(id *string) error {
 	}
 	order.Status = *status
 	return s.orderRepo.Update(id, order)
+}
+
+func (s *OrderService) InsertCustomerOrder(order *Entities.Order) (*Entities.Order, error) {
+	if order.OrderDetail == nil {
+		return nil, errors.New("order detail is required")
+	}
+	status, err := s.statusRepo.GetByName(&constance.Status_Pending)
+	if err != nil {
+		return nil, err
+	}
+	order.Status = *status
+	err = s.orderRepo.Insert(order)
+	if err != nil {
+		return nil, err
+	}
+	return order, nil
 }

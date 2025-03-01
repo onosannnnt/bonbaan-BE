@@ -23,7 +23,7 @@ type Order struct {
 	Status             Status                 `gorm:"foreignKey:StatusID;references:ID"`
 	ServiceID          uuid.UUID              `json:"serviceID"`
 	Service            Service                `gorm:"foreignKey:ServiceID;references:ID"`
-	TransactionID      uuid.UUID              `json:"transactionID"`
+	TransactionID      uuid.UUID              `json:"transactionID" gorm:"foreignKey:TransactionID;default:null"`
 	Transaction        Transaction            `gorm:"foreignKey:TransactionID;references:ID;"`
 	Attachments        []Attachment           `json:"attachments" gorm:"foreignKey:OrderID"`
 }
