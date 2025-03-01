@@ -43,7 +43,7 @@ func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.Servi
 }
 
 func (s *OrderService) Insert(order *Entities.Order) (*Entities.Order, error) {
-	status, err := s.orderRepo.GetDefaultStatus()
+	status, err := s.statusRepo.GetByName(&constance.Status_Unpaid)
 	if err != nil {
 		return nil, err
 	}

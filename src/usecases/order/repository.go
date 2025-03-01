@@ -13,6 +13,5 @@ type OrderRepository interface {
 	Update(id *string, order *Entities.Order) error
 	Delete(id *string) error
 	GetByStatusID(statusID *uuid.UUID, config *model.Pagination) ([]*Entities.Order, int64, error)
-	GetDefaultStatus() (*Entities.Status, error)
 	GetAndUpdateByChargeID(chargeID string) error
 }

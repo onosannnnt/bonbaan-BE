@@ -21,14 +21,6 @@ func NewOrderDriver(db *gorm.DB, statusRepo statusUsecase.StatusUsecase) orderUs
 	}
 }
 
-func (d *OrderDriver) GetDefaultStatus() (*Entities.Status, error) {
-	var selectStatus Entities.Status
-	if err := d.db.Where("name = ?", "unpaid").First(&selectStatus).Error; err != nil {
-		return nil, err
-	}
-	return &selectStatus, nil
-}
-
 func (d *OrderDriver) Insert(order *Entities.Order) error {
 	if err := d.db.Create(order).Error; err != nil {
 		return err
