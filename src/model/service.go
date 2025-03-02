@@ -1,11 +1,11 @@
 package model
 
 type PackageInput struct {
-	Name          string `json:"name"`
-	Item          string `json:"item"`
-	Price         int    `json:"price"`
-	Description   string `json:"description"`
-	PackageTypeID string `json:"package_type_id"`
+	Name        string `json:"name"`
+	Item        string `json:"item"`
+	Price       int    `json:"price"`
+	Description string `json:"description"`
+	OrderTypeID string `json:"order_type_id"`
 }
 
 type CreateServiceInput struct {
@@ -24,11 +24,11 @@ type AttachmentOutput struct {
 }
 
 type PackageOutput struct {
-	Name          string `json:"name"`
-	Item          string `json:"item"`
-	Price         int    `json:"price"`
-	Description   string `json:"description"`
-	PackageTypeID string `json:"package_type_id"`
+	Name        string `json:"name"`
+	Item        string `json:"item"`
+	Price       int    `json:"price"`
+	Description string `json:"description"`
+	OrderTypeID string `json:"order_type_id"`
 }
 
 type CategoryOutput struct {
