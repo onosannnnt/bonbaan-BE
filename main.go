@@ -54,9 +54,9 @@ func main() {
 	router.InitPackageRouter(app, db)
 	router.InitCategoryRouter(app, db)
 	router.InitAttachmentRouter(app, db)
-	router.InitPackageTypeRouter(app, db)
+	router.InitOrderTypeRouter(app, db)
 	app.Listen(":" + config.Port)
-	
+
 }
 
 func Hello(c *fiber.Ctx) error {

@@ -31,34 +31,34 @@ func (sc *ServiceAsService) CreateService(service *Entities.Service) error {
 
 // mapServiceToOutput converts an Entities.Service to a model.ServiceOutput.
 func mapServiceToOutput(s Entities.Service) model.ServiceOutput {
-    // Convert categories
-    categories := make([]model.CategoryOutput, len(s.Categories))
-    for i, c := range s.Categories {
-        categories[i] = mapCategoryToOutput(c)
-    }
+	// Convert categories
+	categories := make([]model.CategoryOutput, len(s.Categories))
+	for i, c := range s.Categories {
+		categories[i] = mapCategoryToOutput(c)
+	}
 
-    // Convert packages
-    packages := make([]model.PackageOutput, len(s.Packages))
-    for i, p := range s.Packages {
-        packages[i] = mapPackageToOutput(p)
-    }
+	// Convert packages
+	packages := make([]model.PackageOutput, len(s.Packages))
+	for i, p := range s.Packages {
+		packages[i] = mapPackageToOutput(p)
+	}
 
-    // Convert attachments
-    attachments := make([]model.AttachmentOutput, len(s.Attachments))
-    for i, a := range s.Attachments {
-        attachments[i] = mapAttachmentToOutput(a)
-    }
+	// Convert attachments
+	attachments := make([]model.AttachmentOutput, len(s.Attachments))
+	for i, a := range s.Attachments {
+		attachments[i] = mapAttachmentToOutput(a)
+	}
 
-    return model.ServiceOutput{
-        ID:          s.ID.String(),
-        Name:        s.Name,
-        Description: s.Description,
-        Rate:        s.Rate,
-        Address:      s.Address,
-        Categories:  categories,
-        Packages:    packages,
-        Attachments: attachments,
-    }
+	return model.ServiceOutput{
+		ID:          s.ID.String(),
+		Name:        s.Name,
+		Description: s.Description,
+		Rate:        s.Rate,
+		Address:     s.Address,
+		Categories:  categories,
+		Packages:    packages,
+		Attachments: attachments,
+	}
 }
 
 // mapCategoryToOutput converts an Entities.Category to a model.CategoryOutput.
@@ -71,11 +71,11 @@ func mapCategoryToOutput(c Entities.Category) model.CategoryOutput {
 // mapPackageToOutput converts an Entities.Package to a model.PackageOutput.
 func mapPackageToOutput(p Entities.Package) model.PackageOutput {
 	return model.PackageOutput{
-		Name:          p.Name,
-		Item:          p.Item,
-		Price:         p.Price,
-		Description:   p.Description,
-		PackageTypeID: p.PackageTypeID.String(),
+		Name:        p.Name,
+		Item:        p.Item,
+		Price:       p.Price,
+		Description: p.Description,
+		OrderTypeID: p.OrderTypeID.String(),
 	}
 }
 
@@ -85,7 +85,6 @@ func mapAttachmentToOutput(a Entities.Attachment) model.AttachmentOutput {
 		URL: a.URL,
 	}
 }
-
 
 // Updated GetAll method.
 func (sc *ServiceAsService) GetAll(config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error) {
