@@ -41,7 +41,7 @@ func main() {
 	app.Use(cors.New(
 		cors.Config{
 			AllowOrigins: "*",
-			AllowHeaders: "Origin, Content-Type, Accept",
+			AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 		},
 	))
 
@@ -54,6 +54,7 @@ func main() {
 	router.InitPackageRouter(app, db)
 	router.InitCategoryRouter(app, db)
 	router.InitAttachmentRouter(app, db)
+	router.InitOrderTypeRouter(app, db)
 	app.Listen(":" + config.Port)
 
 }

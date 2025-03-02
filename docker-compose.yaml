@@ -11,7 +11,7 @@ services:
       PORT: ${PORT}
       DB_HOST: bonbaan-db
       DB_PORT: 5432
-      DB_USER: postgres
+      DB_USER: ${DB_USER}
       DB_PASSWORD:  ${DB_PASSWORD}
       DB_SCHEMA: bonbaan
       JWT_SECRET: ${JWT_SECRET}

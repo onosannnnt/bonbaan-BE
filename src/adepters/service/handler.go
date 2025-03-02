@@ -57,6 +57,11 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	} else {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Categories are missing", nil, nil)
 	}
+	if v, exists := form.Value["address"]; exists && len(v) > 0 {
+		input.Address = v[0]
+	} else {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Address is missing", nil, nil)
+	}
 
 	// Parse packages as a JSON string.
 	if v, exists := form.Value["packages"]; exists && len(v) > 0 {
@@ -74,11 +79,12 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	service := Entities.Service{
 		Name:        input.Name,
 		Description: input.Description,
+		Address:     input.Address,
 	}
 
 	// Map category IDs to category objects.
 	for _, catID := range input.Categories {
-		fmt.Println(catID)
+		// fmt.Println(catID)
 		uid, err := uuid.Parse(catID)
 		if err != nil {
 			return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid category id", err, nil)
@@ -87,14 +93,35 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	}
 
 	// Map packages to the service.
+
+	uniqueOrderTypeIDs := make(map[uuid.UUID]bool)
+
 	for _, pkgInput := range input.Packages {
+		orderTypeID, err := uuid.Parse(pkgInput.OrderTypeID)
+		if err != nil {
+			return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid type id", err, nil)
+		}
+		fmt.Println(orderTypeID)
 		pkg := Entities.Package{
 			Name:        pkgInput.Name,
 			Item:        pkgInput.Item,
 			Price:       pkgInput.Price,
 			Description: pkgInput.Description,
+			OrderTypeID: orderTypeID,
 		}
 		service.Packages = append(service.Packages, pkg)
+		uniqueOrderTypeIDs[orderTypeID] = true
+	}
+	if v, exists := form.Value["custom_package"]; exists && len(v) > 0 {
+		for orderTypeID := range uniqueOrderTypeIDs {
+			customPackage := Entities.Package{
+				Name:        "Custom Package",
+				Description: "Custom package to your needs",
+				Price:       0,
+				OrderTypeID: orderTypeID,
+			}
+			service.Packages = append(service.Packages, customPackage)
+		}
 	}
 
 	// Retrieve files from the "attachments" form field.
@@ -167,10 +194,12 @@ func (h *ServiceHandler) GetAllServices(c *fiber.Ctx) error {
 	if err := c.QueryParser(&config); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request query", err, nil)
 	}
+
 	services, pagination, err := h.ServiceUsecase.GetAll(&config)
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
+	fmt.Println(services)
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, fiber.Map{
 		"services":   services,
 		"pagination": pagination,
