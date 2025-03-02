@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
+	"github.com/onosannnnt/bonbaan-BE/src/model"
 	userUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/user"
 	"gorm.io/gorm"
 )
@@ -67,4 +68,21 @@ func (d *UserDriver) GetAll() (*[]Entities.User, error) {
 		return nil, err
 	}
 	return &users, nil
+}
+
+func (d *UserDriver) InsertInterest(userInterest *model.UserInterestRequest) error {
+	user := Entities.User{}
+	if err := d.db.Where("id = ?", userInterest.UserID).First(&user).Error; err != nil {
+		return err
+	}
+	for _, categoryID := range userInterest.Categories {
+		category := Entities.Category{}
+		if err := d.db.Where("id = ?", categoryID).First(&category).Error; err != nil {
+			return err
+		}
+		if err := d.db.Model(&user).Association("Category").Append(&category); err != nil {
+			return err
+		}
+	}
+	return nil
 }

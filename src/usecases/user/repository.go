@@ -1,6 +1,9 @@
 package userUsecase
 
-import Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
+import (
+	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
+	"github.com/onosannnnt/bonbaan-BE/src/model"
+)
 
 // ส่วนที่กำหนดการทำงานของ repository
 type UserRepository interface {
@@ -10,6 +13,7 @@ type UserRepository interface {
 	Update(user *Entities.User) (*Entities.User, error)
 	GetAll() (*[]Entities.User, error)
 	Delete(id *string) error
+	InsertInterest(userInterest *model.UserInterestRequest) error
 }
 
 type OtpRepository interface {

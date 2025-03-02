@@ -39,6 +39,7 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 	protect.Delete("/", userHandler.Delete)
 	protect.Patch("/change-password", userHandler.ChangePassword)
 	protect.Patch("/", userHandler.Update)
+	protect.Post("/interest", userHandler.InsertInterest)
 
 	admin := protect.Group("/")
 	admin.Use(middleware.IsAdmin)

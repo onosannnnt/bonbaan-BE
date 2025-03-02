@@ -21,6 +21,7 @@ type User struct {
 	Phone     string    `json:"phone"`
 	RoleID    uuid.UUID `json:"role_id"`
 	Role      Role      `gorm:"foreignKey:RoleID ;references:ID"`
+	Category  []Category `gorm:"many2many:user_categories;"`
 }
 
 func InitializeUserData(db *gorm.DB) error {

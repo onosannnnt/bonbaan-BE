@@ -1,5 +1,7 @@
 package model
 
+import "github.com/google/uuid"
+
 type ChangePasswordRequest struct {
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
@@ -29,4 +31,9 @@ type CreateUserRequest struct {
 	Lastname  string `json:"lastname"`
 	Phone     string `json:"phone"`
 	Code      string `json:"code"`
+}
+
+type UserInterestRequest struct {
+	UserID     string      `json:"userID"`
+	Categories []uuid.UUID `json:"categories"`
 }

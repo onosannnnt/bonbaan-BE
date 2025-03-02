@@ -190,3 +190,19 @@ func (h *UserHandler) AdminRegister(c *fiber.Ctx) error {
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
 }
+
+func (h *UserHandler) InsertInterest(c *fiber.Ctx) error {
+	interestRequest := model.UserInterestRequest{}
+	if err := c.BodyParser(&interestRequest); err != nil {
+		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
+	}
+	userID := c.Locals(constance.UserID_ctx).(string)
+	if userID == "" {
+		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
+	}
+	err := h.userUsecase.InsertInterest(&interestRequest)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
+}

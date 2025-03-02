@@ -31,6 +31,7 @@ type UserUsecase interface {
 	Delete(UserID *string) error
 	Update(user *model.UpdateRequest) (*Entities.User, error)
 	AdminRegister(user *model.CreateUserRequest) error
+	InsertInterest(userInterest *model.UserInterestRequest) error
 }
 
 // ส่วนที่ต่อกับ driver handler
@@ -287,4 +288,8 @@ func (s *UserService) AdminRegister(user *model.CreateUserRequest) error {
 		RoleID:    role.ID,
 	}
 	return s.userRepo.Insert(verifyUser)
+}
+
+func (s *UserService) InsertInterest(userInterest *model.UserInterestRequest) error {
+	return s.userRepo.InsertInterest(userInterest)
 }
