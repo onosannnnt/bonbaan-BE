@@ -3,10 +3,10 @@ package constance
 var (
 	Status_Pending    = "pending"
 	Status_Unpaid     = "unpaid"
-	Status_Processing = "processing"
-	Status_Confirm    = "confirm"
-	Status_Review     = "review"
+	Status_Processing = "in progress"
+	Status_Confirm    = "to be confirmed"
+	Status_Review     = "to be reviewed"
 	Status_Completed  = "completed"
-	Status_Refund     = "refund"
+	Status_Refund     = "refunded"
 	Status_Cancelled  = "cancelled"
 )
