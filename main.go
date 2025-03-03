@@ -57,8 +57,8 @@ func main() {
 	router.InitOrderTypeRouter(app, db)
 	router.ReviewRouter(app,db)
 
-	app.Listen(":" + Config.Port)
-
+	app.Listen(":" + config.Port)
+	
 }
 
 func Hello(c *fiber.Ctx) error {

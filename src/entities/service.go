@@ -11,7 +11,8 @@ type Service struct {
 	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:(uuid_generate_v4())"`
 	Description string    `json:"description"`
 	Name        string    `json:"name"`
-	Rate        int       `json:"rate" gorm:"default:0"`
+	Rate        float64       `json:"rate" gorm:"default:0.0"`
+	Review_utils Review_utils 
 	Address      string    `json:"address"`
 	Categories []Category `json:"categories" gorm:"many2many:services_categories;"`
 	Packages   []Package  `json:"packages" gorm:"foreignKey:ServiceID"`

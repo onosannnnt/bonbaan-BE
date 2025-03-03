@@ -39,7 +39,7 @@ type ServiceOutput struct {
 	ID            string             `json:"id"`
 	Name          string             `json:"name"`
 	Description   string             `json:"description"`
-	Rate          int                `json:"rate"`
+	Rate          float64            `json:"rate"`
 	Address       string             `json:"address"`
 	Categories    []CategoryOutput   `json:"categories"`
 	Packages      []PackageOutput    `json:"packages"`
