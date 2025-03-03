@@ -17,5 +17,8 @@ func InitEntity(db *gorm.DB) error {
 	if err := InitializeUserData(db); err != nil {
 		panic(err)
 	}
+	if err := InitializeOrderTypeData(db); err != nil {
+		panic(err)
+	}
 	return nil
 }
