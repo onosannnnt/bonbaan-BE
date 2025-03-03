@@ -58,6 +58,16 @@ func (d *ServiceDriver) GetAll(config *model.Pagination) (*[]Entities.Service, i
 		Find(&services).Error; err != nil {
 		return nil, 0, err
 	}
+
+	for i := range services {
+		var reviewUtils Entities.Review_utils
+		if err := d.db.Where("service_id = ?", services[i].ID).First(&reviewUtils).Error; err == nil {
+			if reviewUtils.TotalReviewer > 0 {
+				services[i].Rate = reviewUtils.TotalRete / reviewUtils.TotalReviewer
+			}
+		}
+	}
+
 	return &services, totalRecords, nil
 }
 
@@ -66,8 +76,17 @@ func (d *ServiceDriver) GetByID(id *string) (*Entities.Service, error) {
 	if err := d.db.Where("id = ?", id).First(&service).Error; err != nil {
 		return nil, err
 	}
+
+	var reviewUtils Entities.Review_utils
+	if err := d.db.Where("service_id = ?", service.ID).First(&reviewUtils).Error; err == nil {
+		if reviewUtils.TotalReviewer > 0 {
+			service.Rate = reviewUtils.TotalRete / reviewUtils.TotalReviewer
+		}
+	}
+
 	return &service, nil
 }
+
 func (d *ServiceDriver) GetPackagebyServiceID(serviceID *string) (*[]Entities.Package, error) {
 	var packages []Entities.Package
 	if err := d.db.Where("service_id = ?", serviceID).Find(&packages).Error; err != nil {
