@@ -37,4 +37,6 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: bonbaan
     volumes:
-      - ./databasepg:/var/lib/postgresql/data
+      - psql_volume_bp:/var/lib/postgresql/data
+volumes:
+  psql_volume_bp:

@@ -32,7 +32,7 @@ func NewServiceHandler(ServiceUsecase ServiceUsecase.ServiceUsecase) *ServiceHan
 func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	// Parse the multipart form:
 	form, err := c.MultipartForm()
-	if err != nil {
+	if (err != nil) {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Error parsing form data", err, nil)
 	}
 	// fmt.Println(form.Value)
