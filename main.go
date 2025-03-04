@@ -55,7 +55,7 @@ func main() {
 	router.InitCategoryRouter(app, db)
 	router.InitAttachmentRouter(app, db)
 	router.InitOrderTypeRouter(app, db)
-	router.ReviewRouter(app,db)
+	router.InitReviewRouter(app,db)
 
 	app.Listen(":" + config.Port)
 	

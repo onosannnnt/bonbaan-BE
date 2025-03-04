@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func ReviewRouter(app *fiber.App, db *gorm.DB) {
+func InitReviewRouter(app *fiber.App, db *gorm.DB) {
 
 	reviewRepo := reviewAdapter.NewReviewDriver(db)
 	reviewUsecase := reviewUsecase.NewReviewService(reviewRepo)
