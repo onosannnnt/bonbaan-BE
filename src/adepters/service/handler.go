@@ -181,7 +181,13 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 			service.Attachments = append(service.Attachments, Entities.Attachment{URL: imgURL})
 		}
 	}
-
+	reviewUtils := Entities.Review_utils{
+		ID:            uuid.New(),
+		TotalReviewer: 0,
+		TotalRete:     0,
+		ServiceID:     service.ID,
+	}
+	service.Review_utils = reviewUtils
 	// Create the service using the use case.
 	if err := h.ServiceUsecase.CreateService(&service); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)

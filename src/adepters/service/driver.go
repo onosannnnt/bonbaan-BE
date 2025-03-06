@@ -46,8 +46,7 @@ func (d *ServiceDriver) GetAll(config *model.Pagination) (*[]Entities.Service, i
 	// Ordering logic
 	if config.OrderBy != "" && (config.OrderDirection == "ASC" || config.OrderDirection == "DESC") {
 		if config.OrderBy == "rate" {
-			// Order by TotalRete but handle NULL values
-			db = db.Order(fmt.Sprintf("COALESCE(review_utils.total_rete, 0) %s", config.OrderDirection))
+			db = db.Order(fmt.Sprintf("review_utils.total_rete / NULLIF(review_utils.total_reviewer, 0) %s", config.OrderDirection))
 		} else {
 			db = db.Order(fmt.Sprintf("services.%s %s", config.OrderBy, config.OrderDirection))
 		}
@@ -55,7 +54,6 @@ func (d *ServiceDriver) GetAll(config *model.Pagination) (*[]Entities.Service, i
 		db = db.Order("services.updated_at DESC")
 	}
 
-	
 	if err := db.
 		Preload("Categories", func(tx *gorm.DB) *gorm.DB {
 			return tx.Omit("created_at", "updated_at", "deleted_at")
@@ -71,7 +69,7 @@ func (d *ServiceDriver) GetAll(config *model.Pagination) (*[]Entities.Service, i
 		Find(&services).Error; err != nil {
 		return nil, 0, err
 	}
-	
+
 	for i := range services {
 		var reviewUtils Entities.Review_utils
 		if err := d.db.Where("service_id = ?", services[i].ID).First(&reviewUtils).Error; err == nil {
