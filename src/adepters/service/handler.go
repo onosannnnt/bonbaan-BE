@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -32,7 +33,7 @@ func NewServiceHandler(ServiceUsecase ServiceUsecase.ServiceUsecase) *ServiceHan
 func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	// Parse the multipart form:
 	form, err := c.MultipartForm()
-	if (err != nil) {
+	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Error parsing form data", err, nil)
 	}
 	// fmt.Println(form.Value)
@@ -83,7 +84,8 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	}
 
 	// Map category IDs to category objects.
-	for _, catID := range input.Categories {
+	categories := strings.Split(input.Categories[0], ",")
+	for _, catID := range categories {
 		// fmt.Println(catID)
 		uid, err := uuid.Parse(catID)
 		if err != nil {
@@ -101,7 +103,6 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 		if err != nil {
 			return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid type id", err, nil)
 		}
-		fmt.Println(orderTypeID)
 		pkg := Entities.Package{
 			Name:        pkgInput.Name,
 			Item:        pkgInput.Item,
