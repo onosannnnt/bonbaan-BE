@@ -12,6 +12,7 @@ type OrderInsertRequest struct {
 	StatusID           string `json:"statusID"`
 	ServiceID          string `json:"serviceID"`
 	Deadline           string `json:"deadline"`
+	OrderTypeID        string `json:"orderTypeID"`
 }
 
 type ChargeEvent struct {

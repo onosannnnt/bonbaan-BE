@@ -18,7 +18,7 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 
 	orderRepo := orderAdepter.NewOrderDriver(db, statusUsecase)
 	serviceRepo := serviceAdapter.NewServiceDriver(db)
-	orderUsecase := orderUsecase.NewOrderService(orderRepo, serviceRepo, statusRepo)
+	orderUsecase := orderUsecase.NewOrderService(orderRepo, serviceRepo, statusRepo, db)
 	orderHandler := orderAdepter.NewOrderHandler(orderUsecase)
 
 	order := app.Group("/orders")
@@ -33,6 +33,7 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	protected.Post("/webhook", orderHandler.Hook)
 	protected.Post("/cancel/:id", orderHandler.CancleOrder)
 	protected.Post("/submit", orderHandler.SubmitOrder)
+	protected.Post("/custom-order", orderHandler.InsertCustomOrder)
 
 	admin := protected.Group("/")
 	admin.Use(middleware.IsAdmin)
