@@ -27,7 +27,7 @@ func (h *ReviewHandler) Insert(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusConflict, "This review already exists", err, nil)
 	}
 
-	return utils.ResponseJSON(c, fiber.StatusCreated, "Review created successfully", nil, review)
+	return utils.ResponseJSON(c, fiber.StatusOK, "Review created successfully", nil, review)
 }
 
 func (h *ReviewHandler) GetAll(c *fiber.Ctx) error {
