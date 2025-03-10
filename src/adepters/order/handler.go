@@ -51,6 +51,10 @@ func (h *OrderHandler) Insert(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for ServiceID", err, nil)
 	}
+	insertOrder.OrderTypeID, err = uuid.Parse(order.OrderTypeID)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for OrderTypeID", err, nil)
+	}
 	data, err := h.OrderUsecase.Insert(&insertOrder)
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to insert order", err, err.Error())
@@ -243,4 +247,37 @@ func (h *OrderHandler) CompleteOrder(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to complete order", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
+}
+
+func (h *OrderHandler) InsertCustomOrder(c *fiber.Ctx) error {
+	order := model.OrderInsertRequest{}
+	if err := c.BodyParser(&order); err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
+	}
+	insertOrder := Entities.Order{}
+	insertOrder.CancellationReason = order.CancellationReason
+	insertOrder.OrderDetail = model.JSONB(order.OrderDetail)
+	insertOrder.Note = order.Note
+	parsedDate, err := time.Parse("2006-01-02", order.Deadline)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid date format", err, nil)
+	}
+	insertOrder.Deadline = time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, time.UTC)
+	insertOrder.UserID, err = uuid.Parse(order.UserID)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for UserID", err, nil)
+	}
+	insertOrder.ServiceID, err = uuid.Parse(order.ServiceID)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for ServiceID", err, nil)
+	}
+	insertOrder.OrderTypeID, err = uuid.Parse(order.OrderTypeID)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for OrderTypeID", err, nil)
+	}
+	data, err := h.OrderUsecase.InsertCustomOrder(&insertOrder)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to insert order", err, err.Error())
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, data)
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	serviceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
 	statusUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/status"
+	"gorm.io/gorm"
 )
 
 type OrderUsecase interface {
@@ -26,16 +27,19 @@ type OrderUsecase interface {
 	AcceptOrder(id *string) error
 	SubmitOrder(order *model.ConfirmOrderRequest) error
 	CompleteOrder(id *string) error
+	InsertCustomOrder(order *Entities.Order) (*Entities.Order, error)
 }
 
 type OrderService struct {
+	db          *gorm.DB
 	orderRepo   OrderRepository
 	serviceRepo serviceUsecase.ServiceRepository
 	statusRepo  statusUsecase.StatusRepository
 }
 
-func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.ServiceRepository, statusRepo statusUsecase.StatusRepository) OrderUsecase {
+func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.ServiceRepository, statusRepo statusUsecase.StatusRepository, db *gorm.DB) OrderUsecase {
 	return &OrderService{
+		db:          db,
 		orderRepo:   orderRepo,
 		serviceRepo: serviceRepo,
 		statusRepo:  statusRepo,
@@ -43,7 +47,7 @@ func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.Servi
 }
 
 func (s *OrderService) Insert(order *Entities.Order) (*Entities.Order, error) {
-	status, err := s.orderRepo.GetDefaultStatus()
+	status, err := s.statusRepo.GetByName(&constance.Status_Unpaid)
 	if err != nil {
 		return nil, err
 	}
@@ -66,14 +70,12 @@ func (s *OrderService) Insert(order *Entities.Order) (*Entities.Order, error) {
 		return nil, err
 	}
 	charge := &omise.Charge{}
-	err = client.Do(charge, &operations.CreateCharge{
-		Amount:   source.Amount,
-		Currency: source.Currency,
-		Source:   source.ID,
-	})
-	if err != nil {
-		return nil, err
-	}
+	tx := s.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 	var transaction Entities.Transaction
 	transaction.Price = price
 	transaction.ChargeID = charge.ID
@@ -82,8 +84,19 @@ func (s *OrderService) Insert(order *Entities.Order) (*Entities.Order, error) {
 	order.Status = *status
 	err = s.orderRepo.Insert(order)
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
+	err = client.Do(charge, &operations.CreateCharge{
+		Amount:   source.Amount,
+		Currency: source.Currency,
+		Source:   source.ID,
+	})
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	tx.Commit()
 	return order, nil
 }
 
@@ -205,14 +218,12 @@ func (s *OrderService) AcceptOrder(id *string) error {
 		return err
 	}
 	charge := &omise.Charge{}
-	err = client.Do(charge, &operations.CreateCharge{
-		Amount:   source.Amount,
-		Currency: source.Currency,
-		Source:   source.ID,
-	})
-	if err != nil {
-		return err
-	}
+	tx := s.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 	var transaction Entities.Transaction
 	transaction.Price = price
 	transaction.ChargeID = charge.ID
@@ -221,8 +232,19 @@ func (s *OrderService) AcceptOrder(id *string) error {
 	order.Status = *status
 	err = s.orderRepo.Update(id, order)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
+	err = client.Do(charge, &operations.CreateCharge{
+		Amount:   source.Amount,
+		Currency: source.Currency,
+		Source:   source.ID,
+	})
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
 	return nil
 }
 
@@ -251,4 +273,17 @@ func (s *OrderService) CompleteOrder(id *string) error {
 	}
 	order.Status = *status
 	return s.orderRepo.Update(id, order)
+}
+
+func (s *OrderService) InsertCustomOrder(order *Entities.Order) (*Entities.Order, error) {
+	status, err := s.statusRepo.GetByName(&constance.Status_Pending)
+	if err != nil {
+		return nil, err
+	}
+	order.Status = *status
+	err = s.orderRepo.Insert(order)
+	if err != nil {
+		return nil, err
+	}
+	return order, nil
 }
