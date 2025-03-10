@@ -49,16 +49,17 @@ func main() {
 	router.InitRoleRouter(app, db)
 	router.InitStatusRouter(app, db)
 	router.InitOrderRouter(app, db)
-	router.ServiceRouter(app, db)
+	router.InitServiceRouter(app, db)
 	router.InitTransactionRouter(app, db)
 	router.InitPackageRouter(app, db)
 	router.InitCategoryRouter(app, db)
 	router.InitAttachmentRouter(app, db)
 	router.InitOrderTypeRouter(app, db)
-	router.InitReviewRouter(app,db)
+	router.InitReviewRouter(app, db)
+	router.InitNotificationRouter(app, db)
 
 	app.Listen(":" + config.Port)
-	
+
 }
 
 func Hello(c *fiber.Ctx) error {

@@ -7,12 +7,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func ServiceRouter(app *fiber.App, db *gorm.DB) {
+func InitServiceRouter(app *fiber.App, db *gorm.DB) {
 
 	serviceRepo := serviceAdapter.NewServiceDriver(db)
 	serviceUsecase := serviceUsecase.NewServiceUsecase(serviceRepo)
 	serviceHandler := serviceAdapter.NewServiceHandler(serviceUsecase)
-	
+
 	ser := app.Group("/services")
 	ser.Get("/", serviceHandler.GetAllServices)
 	ser.Get("/:id", serviceHandler.GetByServiceID)
@@ -23,10 +23,9 @@ func ServiceRouter(app *fiber.App, db *gorm.DB) {
 
 	// admin := protected.Group("/")
 	// admin.Use(middleware.IsAdmin)
-	
+
 	ser.Post("/", serviceHandler.CreateService)
 	ser.Patch("/:id", serviceHandler.UpdateService)
 	ser.Delete("/:id", serviceHandler.DeleteService)
-	
 
 }

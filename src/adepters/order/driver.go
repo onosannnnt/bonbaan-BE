@@ -2,6 +2,7 @@ package orderAdepter
 
 import (
 	"github.com/google/uuid"
+	"github.com/onosannnnt/bonbaan-BE/src/constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	orderUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order"
@@ -86,8 +87,7 @@ func (d *OrderDriver) GetAndUpdateByChargeID(chargeID string) error {
 		First(&selectOrder).Error; err != nil {
 		return err
 	}
-	var status = "processing"
-	processingOrder, err := d.statusRepo.GetStatusByName(&status)
+	processingOrder, err := d.statusRepo.GetStatusByName(&constance.Status_Processing)
 	if err != nil {
 		return err
 	}
