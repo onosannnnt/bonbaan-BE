@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -54,6 +53,7 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	// Optional: parse rate if provided (assumed to be an integer)
 	// Categories should be provided as multiple values.
 	if v, exists := form.Value["categories"]; exists && len(v) > 0 {
+		fmt.Println(v)
 		input.Categories = v
 	} else {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Categories are missing", nil, nil)
@@ -84,9 +84,8 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	}
 
 	// Map category IDs to category objects.
-	categories := strings.Split(input.Categories[0], ",")
-	for _, catID := range categories {
-		// fmt.Println(catID)
+	for _, catID := range input.Categories {
+		fmt.Println(catID)
 		uid, err := uuid.Parse(catID)
 		if err != nil {
 			return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid category id", err, nil)
