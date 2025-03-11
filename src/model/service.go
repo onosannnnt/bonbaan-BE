@@ -20,6 +20,7 @@ type CreateServiceInput struct {
 }
 
 type AttachmentOutput struct {
+	ID  string `json:"id"`
 	URL string `json:"url"`
 }
 
@@ -32,6 +33,7 @@ type PackageOutput struct {
 }
 
 type CategoryOutput struct {
+	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -45,4 +47,7 @@ type ServiceOutput struct {
 	Packages      []PackageOutput    `json:"packages"`
 	Attachments   []AttachmentOutput `json:"attachments"`
 	CustomPackage bool               `json:"custom_package"`
+	UpdateAt      string             `json:"update_at"`
+	CreateAt      string             `json:"create_at"`
+	DeleteAt      string             `json:"delete_at"`
 }
