@@ -84,7 +84,7 @@ func (d *ServiceDriver) GetAll(config *model.Pagination) (*[]Entities.Service, i
 
 func (d *ServiceDriver) GetByID(id *string) (*Entities.Service, error) {
 	var service Entities.Service
-	if err := d.db.Preload("Review_utils").Where("id = ?", id).First(&service).Error; err != nil {
+	if err := d.db.Preload("Review_utils").Preload("Categories").Preload("Packages").Preload("Attachments").Where("id = ?", id).First(&service).Error; err != nil {
 		return nil, err
 	}
 

@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -84,9 +83,7 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	}
 
 	// Map category IDs to category objects.
-	categories := strings.Split(input.Categories[0], ",")
-	for _, catID := range categories {
-		// fmt.Println(catID)
+	for _, catID := range input.Categories {
 		uid, err := uuid.Parse(catID)
 		if err != nil {
 			return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid category id", err, nil)
