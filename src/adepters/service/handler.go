@@ -206,7 +206,7 @@ func (h *ServiceHandler) GetAllServices(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
-	fmt.Println(services)
+	// fmt.Println(services)
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, fiber.Map{
 		"services":   services,
 		"pagination": pagination,
