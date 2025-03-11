@@ -84,7 +84,6 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 
 	// Map category IDs to category objects.
 	for _, catID := range input.Categories {
-		fmt.Println(catID)
 		uid, err := uuid.Parse(catID)
 		if err != nil {
 			return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid category id", err, nil)
