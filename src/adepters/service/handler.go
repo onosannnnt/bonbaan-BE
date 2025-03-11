@@ -53,7 +53,6 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	// Optional: parse rate if provided (assumed to be an integer)
 	// Categories should be provided as multiple values.
 	if v, exists := form.Value["categories"]; exists && len(v) > 0 {
-		fmt.Println(v)
 		input.Categories = v
 	} else {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Categories are missing", nil, nil)
