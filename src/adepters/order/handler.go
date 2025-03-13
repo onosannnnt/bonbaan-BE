@@ -110,11 +110,7 @@ func (h *OrderHandler) Update(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
 	}
 	updateOrder := Entities.Order{}
-	parsedID, err := uuid.Parse(id)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format", err, nil)
-	}
-	updateOrder.ID = parsedID
+	updateOrder.ID = id
 	updateOrder.StatusID = uuid.MustParse(order.StatusID)
 	if err := h.OrderUsecase.Update(&id, &updateOrder); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to update order", err, nil)

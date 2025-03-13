@@ -12,12 +12,12 @@ import (
 // GenerateRandomID generates a random ID with a random character in front in the format "nt000001"
 func GenerateRandomID() (string, error) {
 	rand.Seed(time.Now().UnixNano())
-	randomNumber := rand.Intn(999999) + 1
+	randomNumber := rand.Intn(99999999) + 1
 	randomChar1 := 'A' + rune(rand.Intn(26)) // Generate the first random character between 'a' and 'z'
 	randomChar2 := 'A' + rune(rand.Intn(26)) // Generate the second random character between 'a' and 'z'
 	id := fmt.Sprintf("%c%c%06d", randomChar1, randomChar2, randomNumber)
 
-	regexPattern := `^[A-Z][A-Z]\d{6}$`
+	regexPattern := `^[A-Z][A-Z]\d{8}$`
 	matched, err := regexp.MatchString(regexPattern, id)
 	if err != nil {
 		return "", err

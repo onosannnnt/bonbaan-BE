@@ -11,7 +11,7 @@ type Notification struct {
 	Header  string    `json:"header"`
 	Body    string    `json:"body"`
 	IsRead  bool      `json:"is_read"`
-	OrderID uuid.UUID `json:"orderID" gorm:"type:uuid;default:null"`
+	OrderID string    `json:"orderID" gorm:"type:uuid;default:null"`
 	Order   Order     `gorm:"foreignKey:OrderID;default:null"`
 	UserID  uuid.UUID `json:"userID" gorm:"type:uuid"`
 	User    User      `gorm:"foreignKey:UserID "`

@@ -2,6 +2,7 @@ package orderUsecase
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -11,6 +12,7 @@ import (
 	"github.com/onosannnnt/bonbaan-BE/src/constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
+	NotificationUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/notification"
 	serviceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
 	statusUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/status"
 	"gorm.io/gorm"
@@ -33,18 +35,20 @@ type OrderUsecase interface {
 }
 
 type OrderService struct {
-	db          *gorm.DB
-	orderRepo   OrderRepository
-	serviceRepo serviceUsecase.ServiceRepository
-	statusRepo  statusUsecase.StatusRepository
+	db               *gorm.DB
+	orderRepo        OrderRepository
+	serviceRepo      serviceUsecase.ServiceRepository
+	statusRepo       statusUsecase.StatusRepository
+	notificationRepo NotificationUsecase.NotificationRepository
 }
 
-func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.ServiceRepository, statusRepo statusUsecase.StatusRepository, db *gorm.DB) OrderUsecase {
+func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.ServiceRepository, statusRepo statusUsecase.StatusRepository, notificationRepo NotificationUsecase.NotificationRepository, db *gorm.DB) OrderUsecase {
 	return &OrderService{
-		db:          db,
-		orderRepo:   orderRepo,
-		serviceRepo: serviceRepo,
-		statusRepo:  statusRepo,
+		db:               db,
+		orderRepo:        orderRepo,
+		serviceRepo:      serviceRepo,
+		statusRepo:       statusRepo,
+		notificationRepo: notificationRepo,
 	}
 }
 
@@ -175,32 +179,59 @@ func (s *OrderService) Delete(id *string) error {
 }
 
 func (s *OrderService) CancelOrder(id *string, cancelReason *string) error {
+	tx := s.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 	order, err := s.orderRepo.GetByID(id)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 	status, err := s.statusRepo.GetByName(&constance.Status_Cancelled)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 	if order.Status.Name == constance.Status_Cancelled {
 		return errors.New("order is already cancelled")
 	}
 	order.Status = *status
-	order.CancellationReason = *cancelReason
-	return s.orderRepo.Update(id, order)
+	err = s.notificationRepo.Insert(&Entities.Notification{
+		UserID:  order.UserID,
+		Header:  "Order Cancelled",
+		Body:    "Your order has been cancelled because " + *cancelReason,
+		OrderID: order.ID,
+	})
+	if err != nil {
+		tx.Rollback()
+	}
+	s.orderRepo.Update(id, order)
+	tx.Commit()
+	return nil
 }
 
 func (s *OrderService) ApproveOrder(id *string) error {
+	tx := s.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 	order, err := s.orderRepo.GetByID(id)
 	if err != nil {
+		tx.Rollback()
 		return err
+
 	}
 	if order.Status.Name != constance.Status_Confirm {
 		return errors.New("order is not confirm")
 	}
 	status, err := s.statusRepo.GetByName(&constance.Status_Unpaid)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 	order.Status = *status
@@ -211,14 +242,9 @@ func (s *OrderService) ApproveOrder(id *string) error {
 	source := &omise.Source{}
 	price, err := strconv.ParseFloat(order.OrderDetail["price"].(string), 64)
 	if err != nil {
+
 		return err
 	}
-	tx := s.db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
 	err = client.Do(source, &operations.CreateSource{
 
 		Amount:   int64(price * 100),
@@ -249,29 +275,65 @@ func (s *OrderService) ApproveOrder(id *string) error {
 		tx.Rollback()
 		return err
 	}
-
+	err = s.notificationRepo.Insert(&Entities.Notification{
+		UserID:  order.UserID,
+		Header:  "Order Approved",
+		Body:    "Your order has been approved",
+		OrderID: order.ID,
+	})
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
 	tx.Commit()
 	return nil
 }
 
 func (s *OrderService) SubmitOrder(order *model.SubmitOrderRequest) error {
+	tx := s.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 	orderEntity, err := s.orderRepo.GetByID(&order.OrderID)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 	if orderEntity.Status.Name != constance.Status_Processing {
+		tx.Rollback()
 		return errors.New("order is not in processing")
 	}
 	status, err := s.statusRepo.GetByName(&constance.Status_Approve)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 	orderEntity.Status = *status
 	orderEntity.Attachments = order.Attachments
-	return s.orderRepo.Update(&order.OrderID, orderEntity)
+	s.orderRepo.Update(&order.OrderID, orderEntity)
+	err = s.notificationRepo.Insert(&Entities.Notification{
+		UserID:  orderEntity.UserID,
+		Header:  "Order Submitted",
+		Body:    fmt.Sprintf("Your %s order has been submitted. Please check your order to approve", orderEntity.ID),
+		OrderID: orderEntity.ID,
+	})
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+	return nil
 }
 
 func (s *OrderService) CompleteOrder(id *string) error {
+	tx := s.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 	order, err := s.orderRepo.GetByID(id)
 	if err != nil {
 		return err
@@ -281,7 +343,19 @@ func (s *OrderService) CompleteOrder(id *string) error {
 		return err
 	}
 	order.Status = *status
-	return s.orderRepo.Update(id, order)
+	s.orderRepo.Update(id, order)
+	err = s.notificationRepo.Insert(&Entities.Notification{
+		UserID:  order.UserID,
+		Header:  "Order Completed",
+		Body:    "Your order has been completed",
+		OrderID: order.ID,
+	})
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+	return nil
 }
 
 func (s *OrderService) InsertCustomOrder(order *Entities.Order) (*Entities.Order, error) {
