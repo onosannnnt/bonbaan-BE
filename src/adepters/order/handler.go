@@ -59,7 +59,7 @@ func (h *OrderHandler) Insert(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to insert order", err, err.Error())
 	}
-	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, data)
+	return utils.ResponseJSON(c, fiber.StatusCreated, "Success", nil, data)
 }
 
 func (h *OrderHandler) GetAll(c *fiber.Ctx) error {

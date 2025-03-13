@@ -35,7 +35,7 @@ func (h *NotificationHandler) Insert(c *fiber.Ctx) error {
 		Body:    inputNotification.Body,
 		OrderID: uuidOrderID,
 	}
-	return utils.ResponseJSON(c, fiber.StatusOK, "Success", h.NotificationUsecase.Insert(&notification), nil)
+	return utils.ResponseJSON(c, fiber.StatusCreated, "Success", h.NotificationUsecase.Insert(&notification), nil)
 }
 
 func (h *NotificationHandler) GetAll(c *fiber.Ctx) error {
