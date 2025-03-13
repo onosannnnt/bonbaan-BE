@@ -1,4 +1,4 @@
-package notificationAdepter
+package notificationAdapter
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -28,10 +28,12 @@ func (h *NotificationHandler) Insert(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "UserID is required", nil, nil)
 	}
 	uuidUserID := uuid.MustParse(inputNotification.UserID)
+	uuidOrderID := uuid.MustParse(inputNotification.OrderID)
 	notification := Entities.Notification{
-		UserID: uuidUserID,
-		Header: inputNotification.Header,
-		Body:   inputNotification.Body,
+		UserID:  uuidUserID,
+		Header:  inputNotification.Header,
+		Body:    inputNotification.Body,
+		OrderID: uuidOrderID,
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", h.NotificationUsecase.Insert(&notification), nil)
 }
@@ -87,9 +89,24 @@ func (h *NotificationHandler) Read(c *fiber.Ctx) error {
 
 func (h *NotificationHandler) GetByUserID(c *fiber.Ctx) error {
 	userID := c.Params("id")
+	isReadProvided := c.Query("is-read") != ""
+	isRead := c.QueryBool("is-read")
+	if userID == "" {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "UserID is required", nil, nil)
+	}
 	config := model.Pagination{}
 	if err := c.QueryParser(&config); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse query", err, nil)
+	}
+	if isReadProvided {
+		notifications, pagination, err := h.NotificationUsecase.GetUnreadByUserID(&userID, &isRead, &config)
+		if err != nil {
+			return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get notifications", err, nil)
+		}
+		return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, fiber.Map{
+			"notifications": notifications,
+			"pagination":    pagination,
+		})
 	}
 	notifications, pagination, err := h.NotificationUsecase.GetByUserID(&userID, &config)
 	if err != nil {

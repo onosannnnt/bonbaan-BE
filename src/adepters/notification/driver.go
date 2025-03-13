@@ -1,4 +1,4 @@
-package notificationAdepter
+package notificationAdapter
 
 import (
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
@@ -65,7 +65,16 @@ func (d *NotificationDriver) Read(id *string) error {
 func (d *NotificationDriver) GetByUserID(userID *string, pagination *model.Pagination) ([]*Entities.Notification, int64, error) {
 	var selectNotification []*Entities.Notification
 	var count int64
-	if err := d.db.Where("user_id = ?", &userID).Find(&selectNotification).Count(&count).Error; err != nil {
+	if err := d.db.Where("user_id = ?", *userID).Find(&selectNotification).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+	return selectNotification, count, nil
+}
+
+func (d *NotificationDriver) GetByUserIDAndUnread(userID *string, isRead *bool, pagination *model.Pagination) ([]*Entities.Notification, int64, error) {
+	var selectNotification []*Entities.Notification
+	var count int64
+	if err := d.db.Where("user_id = ? AND is_read = ?", *userID, isRead).Find(&selectNotification).Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
 	return selectNotification, count, nil

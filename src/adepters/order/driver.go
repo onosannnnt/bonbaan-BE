@@ -45,7 +45,7 @@ func (d *OrderDriver) GetAll(config *model.Pagination) ([]*Entities.Order, int64
 		return nil, 0, err
 	}
 
-	if err := d.db.Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
+	if err := d.db.Preload("OrderType").Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Omit("password")
 	}).Preload("Service").Order("created_at desc").
 		Limit(config.PageSize).Offset((config.CurrentPage - 1) * config.PageSize).

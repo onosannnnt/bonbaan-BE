@@ -146,15 +146,15 @@ func (h *OrderHandler) Hook(c *fiber.Ctx) error {
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
 }
 
-func (h *OrderHandler) CancleOrder(c *fiber.Ctx) error {
+func (h *OrderHandler) CancelOrder(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var request struct {
-		CancleReason string `json:"cancle_reason"`
+		CancelReason string `json:"cancel_reason"`
 	}
 	if err := c.BodyParser(&request); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
 	}
-	if err := h.OrderUsecase.CancleOrder(&id, &request.CancleReason); err != nil {
+	if err := h.OrderUsecase.CancelOrder(&id, &request.CancelReason); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to cancel order", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
@@ -232,7 +232,6 @@ func (h *OrderHandler) SubmitOrder(c *fiber.Ctx) error {
 		}
 	}
 	if err := h.OrderUsecase.SubmitOrder(&input); err != nil {
-		fmt.Println(err.Error())
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to confirm order", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)

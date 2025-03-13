@@ -32,15 +32,15 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	protected.Patch("/:id", orderHandler.Update)
 	protected.Delete("/:id", orderHandler.Delete)
 
-	protected.Patch("/:id/cancel", orderHandler.CancleOrder)
-	protected.Patch("/:id/submit", orderHandler.SubmitOrder)
+	protected.Post("/:id/cancel", orderHandler.CancelOrder)
+	protected.Post("/:id/submit", orderHandler.SubmitOrder)
 	protected.Post("/custom-order", orderHandler.InsertCustomOrder)
-	protected.Patch("/:id/approve", orderHandler.ApproveOrder)
-	protected.Patch("/:id/complete", orderHandler.CompleteOrder)
+	protected.Post("/:id/approve", orderHandler.ApproveOrder)
+	protected.Post("/:id/complete", orderHandler.CompleteOrder)
 
 	admin := protected.Group("/")
 	admin.Use(middleware.IsAdmin)
 
-	admin.Patch("/:id/accept", orderHandler.AcceptOrder)
+	admin.Post("/:id/accept", orderHandler.AcceptOrder)
 
 }

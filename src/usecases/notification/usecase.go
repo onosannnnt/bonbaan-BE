@@ -13,6 +13,7 @@ type NotificationUsecase interface {
 	Delete(id *string) error
 	Read(id *string) error
 	GetByUserID(userID *string, config *model.Pagination) ([]*Entities.Notification, *model.Pagination, error)
+	GetUnreadByUserID(userID *string, read *bool, config *model.Pagination) ([]*Entities.Notification, *model.Pagination, error)
 }
 
 type NotificationService struct {
@@ -79,6 +80,32 @@ func (s *NotificationService) GetByUserID(userID *string, config *model.Paginati
 		config.CurrentPage = 1
 	}
 	notifications, totalRecords, err := s.notificationRepo.GetByUserID(userID, config)
+	if err != nil {
+		return nil, nil, err
+	}
+	var totalPages int64
+	if totalRecords%int64(config.PageSize) == 0 {
+		totalPages = totalRecords / int64(config.PageSize)
+	} else {
+		totalPages = totalRecords/int64(config.PageSize) + 1
+	}
+	pagination := &model.Pagination{
+		CurrentPage:  config.CurrentPage,
+		PageSize:     config.PageSize,
+		TotalPages:   int(totalPages),
+		TotalRecords: int(totalRecords),
+	}
+	return notifications, pagination, nil
+}
+
+func (s *NotificationService) GetUnreadByUserID(userID *string, read *bool, config *model.Pagination) ([]*Entities.Notification, *model.Pagination, error) {
+	if config.PageSize <= 0 {
+		config.PageSize = 10
+	}
+	if config.CurrentPage <= 0 {
+		config.CurrentPage = 1
+	}
+	notifications, totalRecords, err := s.notificationRepo.GetByUserIDAndUnread(userID, read, config)
 	if err != nil {
 		return nil, nil, err
 	}

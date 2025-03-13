@@ -13,4 +13,5 @@ type NotificationRepository interface {
 	Delete(id *string) error
 	Read(id *string) error
 	GetByUserID(userID *string, pagination *model.Pagination) ([]*Entities.Notification, int64, error)
+	GetByUserIDAndUnread(userID *string, isRead *bool, pagination *model.Pagination) ([]*Entities.Notification, int64, error)
 }

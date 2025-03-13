@@ -24,7 +24,7 @@ type OrderUsecase interface {
 	Update(id *string, order *Entities.Order) error
 	Delete(id *string) error
 	Hook(id *string) error
-	CancleOrder(id *string, cancleReason *string) error
+	CancelOrder(id *string, cancelReason *string) error
 	SubmitOrder(order *model.SubmitOrderRequest) error
 	CompleteOrder(id *string) error
 	InsertCustomOrder(order *Entities.Order) (*Entities.Order, error)
@@ -174,7 +174,7 @@ func (s *OrderService) Delete(id *string) error {
 	return s.orderRepo.Delete(id)
 }
 
-func (s *OrderService) CancleOrder(id *string, cancleReason *string) error {
+func (s *OrderService) CancelOrder(id *string, cancelReason *string) error {
 	order, err := s.orderRepo.GetByID(id)
 	if err != nil {
 		return err
@@ -184,10 +184,10 @@ func (s *OrderService) CancleOrder(id *string, cancleReason *string) error {
 		return err
 	}
 	if order.Status.Name == constance.Status_Cancelled {
-		return nil
+		return errors.New("order is already cancelled")
 	}
 	order.Status = *status
-	order.CancellationReason = *cancleReason
+	order.CancellationReason = *cancelReason
 	return s.orderRepo.Update(id, order)
 }
 
@@ -260,7 +260,7 @@ func (s *OrderService) SubmitOrder(order *model.SubmitOrderRequest) error {
 		return err
 	}
 	if orderEntity.Status.Name != constance.Status_Processing {
-		return errors.New("order is not in procressing")
+		return errors.New("order is not in processing")
 	}
 	status, err := s.statusRepo.GetByName(&constance.Status_Approve)
 	if err != nil {
