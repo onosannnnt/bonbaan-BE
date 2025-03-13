@@ -22,7 +22,12 @@ type ChargeEvent struct {
 	} `json:"data"`
 }
 
-type ConfirmOrderRequest struct {
+type SubmitOrderRequest struct {
 	OrderID     string                `json:"orderID"`
 	Attachments []Entities.Attachment `json:"attachments,omitempty"`
+}
+
+type ConfirmOrderRequest struct {
+	OrderID string `json:"orderID"`
+	Price   string `json:"price"`
 }

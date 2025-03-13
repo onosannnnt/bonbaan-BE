@@ -25,19 +25,22 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	order.Post("/", orderHandler.Insert)
 	order.Get("/", orderHandler.GetAll)
 	order.Get("/:id", orderHandler.GetByID)
+	order.Post("/webhook", orderHandler.Hook)
 
 	protected := order.Group("/")
 	protected.Use(middleware.IsAuth)
 	protected.Patch("/:id", orderHandler.Update)
 	protected.Delete("/:id", orderHandler.Delete)
-	protected.Post("/webhook", orderHandler.Hook)
-	protected.Post("/cancel/:id", orderHandler.CancleOrder)
-	protected.Post("/submit", orderHandler.SubmitOrder)
+
+	protected.Post("/:id/cancel", orderHandler.CancelOrder)
+	protected.Post("/:id/submit", orderHandler.SubmitOrder)
 	protected.Post("/custom-order", orderHandler.InsertCustomOrder)
+	protected.Post("/:id/approve", orderHandler.ApproveOrder)
+	protected.Post("/:id/complete", orderHandler.CompleteOrder)
 
 	admin := protected.Group("/")
 	admin.Use(middleware.IsAdmin)
 
-	admin.Post("/accept/:id", orderHandler.AcceptOrder)
-	admin.Post("/complete/:id", orderHandler.CompleteOrder)
+	admin.Post("/:id/accept", orderHandler.AcceptOrder)
+
 }

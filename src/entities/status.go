@@ -22,6 +22,7 @@ func InitializeStatusData(db *gorm.DB) error {
 		{Name: constance.Status_Completed},
 		{Name: constance.Status_Refund},
 		{Name: constance.Status_Cancelled},
+		{Name: constance.Status_Approve},
 	}
 	for _, status := range statuses {
 		if err := db.FirstOrCreate(&status, Status{Name: status.Name}).Error; err != nil {

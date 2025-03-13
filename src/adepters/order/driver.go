@@ -2,6 +2,7 @@ package orderAdepter
 
 import (
 	"github.com/google/uuid"
+	"github.com/onosannnnt/bonbaan-BE/src/constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	orderUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order"
@@ -44,7 +45,7 @@ func (d *OrderDriver) GetAll(config *model.Pagination) ([]*Entities.Order, int64
 		return nil, 0, err
 	}
 
-	if err := d.db.Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
+	if err := d.db.Preload("OrderType").Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Omit("password")
 	}).Preload("Service").Order("created_at desc").
 		Limit(config.PageSize).Offset((config.CurrentPage - 1) * config.PageSize).
@@ -86,8 +87,7 @@ func (d *OrderDriver) GetAndUpdateByChargeID(chargeID string) error {
 		First(&selectOrder).Error; err != nil {
 		return err
 	}
-	var status = "processing"
-	processingOrder, err := d.statusRepo.GetStatusByName(&status)
+	processingOrder, err := d.statusRepo.GetStatusByName(&constance.Status_Processing)
 	if err != nil {
 		return err
 	}

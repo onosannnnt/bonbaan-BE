@@ -146,41 +146,37 @@ func (h *OrderHandler) Hook(c *fiber.Ctx) error {
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
 }
 
-func (h *OrderHandler) CancleOrder(c *fiber.Ctx) error {
+func (h *OrderHandler) CancelOrder(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var request struct {
-		CancleReason string `json:"cancle_reason"`
+		CancelReason string `json:"cancel_reason"`
 	}
 	if err := c.BodyParser(&request); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
 	}
-	if err := h.OrderUsecase.CancleOrder(&id, &request.CancleReason); err != nil {
+	if err := h.OrderUsecase.CancelOrder(&id, &request.CancelReason); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to cancel order", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
 }
 
-func (h *OrderHandler) AcceptOrder(c *fiber.Ctx) error {
+func (h *OrderHandler) ApproveOrder(c *fiber.Ctx) error {
 	id := c.Params("id")
-	if err := h.OrderUsecase.AcceptOrder(&id); err != nil {
+	if err := h.OrderUsecase.ApproveOrder(&id); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to accept order", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
 }
 
 func (h *OrderHandler) SubmitOrder(c *fiber.Ctx) error {
+	id := c.Params("id")
 	form, err := c.MultipartForm()
 	if err != nil {
 		fmt.Println(err)
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Error parsing form data", err, nil)
 	}
-	var input model.ConfirmOrderRequest
-	if v, exists := form.Value["orderID"]; exists && len(v) > 0 {
-		input.OrderID = v[0]
-	} else {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Name is missing", nil, nil)
-	}
-
+	var input model.SubmitOrderRequest
+	input.OrderID = id
 	files := form.File["attachments"]
 	if len(files) == 0 {
 		return c.Status(fiber.StatusBadRequest).SendString("No attachments provided")
@@ -280,4 +276,18 @@ func (h *OrderHandler) InsertCustomOrder(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to insert order", err, err.Error())
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, data)
+}
+
+func (h *OrderHandler) AcceptOrder(c *fiber.Ctx) error {
+	id := c.Params("id")
+	updateOrder := model.ConfirmOrderRequest{
+		OrderID: id,
+	}
+	if err := c.BodyParser(&updateOrder); err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
+	}
+	if err := h.OrderUsecase.AcceptOrder(&updateOrder); err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to confirm order", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
 }
