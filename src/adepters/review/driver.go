@@ -47,7 +47,9 @@ func (d *ReviewDriver) Insert(review *Entities.Review) error {
 
 func (d *ReviewDriver) GetAll() ([]*Entities.Review, error) {
 	var reviews []*Entities.Review
-	if err := d.db.Find(&reviews).Error; err != nil {
+	if err := d.db.Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Omit("password")
+	}).Preload("Service").Find(&reviews).Error; err != nil {
 		return nil, err
 	}
 	return reviews, nil
@@ -55,7 +57,9 @@ func (d *ReviewDriver) GetAll() ([]*Entities.Review, error) {
 
 func (d *ReviewDriver) GetByID(id *string) (*Entities.Review, error) {
 	var review Entities.Review
-	if err := d.db.Where("id = ?", id).First(&review).Error; err != nil {
+	if err := d.db.Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Omit("password")
+	}).Preload("Service").Where("id = ?", id).First(&review).Error; err != nil {
 		return nil, err
 	}
 	return &review, nil
