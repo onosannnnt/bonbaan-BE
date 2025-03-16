@@ -3,7 +3,9 @@ package reviewAdepter
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/onosannnnt/bonbaan-BE/src/constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
+	"github.com/onosannnnt/bonbaan-BE/src/model"
 	reviewUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/review"
 	"github.com/onosannnnt/bonbaan-BE/src/utils"
 )
@@ -17,13 +19,33 @@ func NewReviewHandler(usecase reviewUsecase.ReviewUsecase) *ReviewHandler {
 }
 
 func (h *ReviewHandler) Insert(c *fiber.Ctx) error {
-	var review Entities.Review
-
+	review := model.ReviewInsertRequest{}
 	if err := c.BodyParser(&review); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Please fill all the required fields", err, nil)
 	}
 
-	if err := h.ReviewUsecase.Insert(&review); err != nil {
+	insertReview := Entities.Review{}
+	insertReview.Rating = review.Rating
+	insertReview.Detail = review.Detail
+	userID, ok := c.Locals(constance.UserID_ctx).(string)
+	if !ok {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Uable to get UserID from token", nil, nil)
+	}
+	parseUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for UserID", err, nil)
+	}
+	insertReview.UserID = parseUserID
+	insertReview.OrderID, err = uuid.Parse(review.OrderID)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for OrderID", err, nil)
+	}
+	insertReview.ServiceID, err = uuid.Parse(review.ServiceID)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for ServiceID", err, nil)
+	}
+
+	if err := h.ReviewUsecase.Insert(&insertReview); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusConflict, "This review already exists", err, nil)
 	}
 
@@ -75,4 +97,3 @@ func (h *ReviewHandler) Delete(c *fiber.Ctx) error {
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Review deleted successfully", nil, nil)
 }
-
