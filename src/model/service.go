@@ -9,14 +9,13 @@ type PackageInput struct {
 }
 
 type CreateServiceInput struct {
-	Name          string         `json:"name"`
-	Description   string         `json:"description"`
-	Rate          int            `json:"rate"`
-	Address       string         `json:"address"`
-	Categories    []string       `json:"categories"`
-	Packages      []PackageInput `json:"packages"`
-	Attachments   []string       `json:"attachments,omitempty"`
-	CustumPackage bool           `json:"custom_package"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Rate        int            `json:"rate"`
+	Address     string         `json:"address"`
+	Categories  []string       `json:"categories"`
+	Packages    []PackageInput `json:"packages"`
+	Attachments []string       `json:"attachments,omitempty"`
 }
 
 type AttachmentOutput struct {
