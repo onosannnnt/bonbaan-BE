@@ -110,17 +110,6 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 		service.Packages = append(service.Packages, pkg)
 		uniqueOrderTypeIDs[orderTypeID] = true
 	}
-	if v, exists := form.Value["custom_package"]; exists && len(v) > 0 {
-		for orderTypeID := range uniqueOrderTypeIDs {
-			customPackage := Entities.Package{
-				Name:        "Custom Package",
-				Description: "Custom package to your needs",
-				Price:       0,
-				OrderTypeID: orderTypeID,
-			}
-			service.Packages = append(service.Packages, customPackage)
-		}
-	}
 
 	// Retrieve files from the "attachments" form field.
 	files := form.File["attachments"]
