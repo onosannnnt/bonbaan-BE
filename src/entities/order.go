@@ -2,9 +2,9 @@ package Entities
 
 import (
 	"encoding/json"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -12,20 +12,17 @@ type JSON json.RawMessage
 
 type Order struct {
 	gorm.Model
-	ID                 uuid.UUID              `gorm:"primaryKey;default:(uuid_generate_v4())"`
-	CancellationReason string                 `json:"cancellationReason"`
-	Note               string                 `json:"note"`
-	OrderDetail        map[string]interface{} `gorm:"serializer:json;" json:"orderDetail"`
-	Deadline           time.Time              `json:"deadline"`
-	UserID             uuid.UUID              `json:"userID"`
-	User               User                   `gorm:"foreignKey:UserID;references:ID"`
-	StatusID           uuid.UUID              `json:"statusID"`
-	Status             Status                 `gorm:"foreignKey:StatusID;references:ID"`
-	ServiceID          uuid.UUID              `json:"serviceID"`
-	Service            Service                `gorm:"foreignKey:ServiceID;references:ID"`
-	TransactionID      uuid.UUID              `json:"transactionID" gorm:"foreignKey:TransactionID;references:ID;default:null"`
-	Transaction        Transaction            `gorm:"foreignKey:TransactionID;references:ID;default:null"`
-	Attachments        []Attachment           `json:"attachments" gorm:"foreignKey:OrderID"`
-	OrderType          OrderType              `json:"OrderType"`
-	OrderTypeID        uuid.UUID              `gorm:"foreignKey:OrderTypeID;references:ID" json:"OrderTypeID"`
+	ID                 uuid.UUID      `gorm:"type:uuid;primaryKey;default:(uuid_generate_v4())"`
+	UserID             uuid.UUID      `json:"user_id" gorm:"foreignKey:UserID;default:null"`
+	User               User           `json:"user" gorm:"foreignKey:UserID"`
+	Price              float64        `json:"price"`
+	Items              pq.StringArray `gorm:"type:text[]" json:"items"`
+	PackageID          uuid.UUID      `json:"package_id" gorm:"foreignKey:PackageID;default:null"`
+	Package            Package        `json:"package" gorm:"foreignKey:PackageID"`
+	TransactionID      uuid.UUID      `json:"transaction_id" gorm:"foreignKey:TransactionID;default:null"`
+	Transaction        Transaction    `json:"transaction" gorm:"foreignKey:TransactionID"`
+	CancellationReason string         `json:"cancellation_reason" gorm:"default:null"`
+	StatusID           uuid.UUID      `json:"status_id" gorm:"foreignKey:StatusID;default:null"`
+	Status             Status         `json:"status" gorm:"foreignKey:StatusID"`
+	Attachments        []Attachment   `json:"attachment" gorm:"foreignKey:OrderID"`
 }
