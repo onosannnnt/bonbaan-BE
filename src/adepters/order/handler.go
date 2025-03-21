@@ -12,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/onosannnnt/bonbaan-BE/src/config"
+	"github.com/onosannnnt/bonbaan-BE/src/constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	orderUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order"
@@ -30,36 +31,13 @@ func NewOrderHandler(usecase orderUsecase.OrderUsecase) *OrderHandler {
 }
 
 func (h *OrderHandler) Insert(c *fiber.Ctx) error {
-	order := model.OrderInsertRequest{}
+	order := model.OrderInputRequest{}
 	if err := c.BodyParser(&order); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
 	}
-	insertOrder := Entities.Order{}
-	insertOrder.CancellationReason = order.CancellationReason
-	insertOrder.OrderDetail = model.JSONB(order.OrderDetail)
-	insertOrder.Note = order.Note
-	parsedDate, err := time.Parse("2006-01-02", order.Deadline)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid date format", err, nil)
-	}
-	insertOrder.Deadline = time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, time.UTC)
-	insertOrder.UserID, err = uuid.Parse(order.UserID)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for UserID", err, nil)
-	}
-	insertOrder.ServiceID, err = uuid.Parse(order.ServiceID)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for ServiceID", err, nil)
-	}
-	insertOrder.OrderTypeID, err = uuid.Parse(order.OrderTypeID)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for OrderTypeID", err, nil)
-	}
-	data, err := h.OrderUsecase.Insert(&insertOrder)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to insert order", err, err.Error())
-	}
-	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, data)
+	order.UserID = c.Locals(constance.UserID_ctx).(string)
+	h.OrderUsecase.Insert(&order)
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
 }
 
 func (h *OrderHandler) GetAll(c *fiber.Ctx) error {
@@ -105,7 +83,7 @@ func (h *OrderHandler) GetByID(c *fiber.Ctx) error {
 
 func (h *OrderHandler) Update(c *fiber.Ctx) error {
 	id := c.Params("id")
-	order := model.OrderInsertRequest{}
+	var order model.OrderInputRequest
 	if err := c.BodyParser(&order); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
 	}
@@ -115,7 +93,6 @@ func (h *OrderHandler) Update(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format", err, nil)
 	}
 	updateOrder.ID = parsedID
-	updateOrder.StatusID = uuid.MustParse(order.StatusID)
 	if err := h.OrderUsecase.Update(&id, &updateOrder); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to update order", err, nil)
 	}
@@ -149,7 +126,7 @@ func (h *OrderHandler) Hook(c *fiber.Ctx) error {
 func (h *OrderHandler) CancelOrder(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var request struct {
-		CancelReason string `json:"cancel_reason"`
+		CancelReason string `json:"cancellation_reason"`
 	}
 	if err := c.BodyParser(&request); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
@@ -232,6 +209,7 @@ func (h *OrderHandler) SubmitOrder(c *fiber.Ctx) error {
 		}
 	}
 	if err := h.OrderUsecase.SubmitOrder(&input); err != nil {
+		fmt.Println(err)
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to confirm order", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
@@ -246,36 +224,13 @@ func (h *OrderHandler) CompleteOrder(c *fiber.Ctx) error {
 }
 
 func (h *OrderHandler) InsertCustomOrder(c *fiber.Ctx) error {
-	order := model.OrderInsertRequest{}
+	order := model.OrderInputRequest{}
 	if err := c.BodyParser(&order); err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
 	}
-	insertOrder := Entities.Order{}
-	insertOrder.CancellationReason = order.CancellationReason
-	insertOrder.OrderDetail = model.JSONB(order.OrderDetail)
-	insertOrder.Note = order.Note
-	parsedDate, err := time.Parse("2006-01-02", order.Deadline)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid date format", err, nil)
-	}
-	insertOrder.Deadline = time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, time.UTC)
-	insertOrder.UserID, err = uuid.Parse(order.UserID)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for UserID", err, nil)
-	}
-	insertOrder.ServiceID, err = uuid.Parse(order.ServiceID)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for ServiceID", err, nil)
-	}
-	insertOrder.OrderTypeID, err = uuid.Parse(order.OrderTypeID)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for OrderTypeID", err, nil)
-	}
-	data, err := h.OrderUsecase.InsertCustomOrder(&insertOrder)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to insert order", err, err.Error())
-	}
-	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, data)
+	order.UserID = c.Locals(constance.UserID_ctx).(string)
+	h.OrderUsecase.InsertCustomOrder(&order)
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
 }
 
 func (h *OrderHandler) AcceptOrder(c *fiber.Ctx) error {

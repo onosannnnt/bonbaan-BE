@@ -45,9 +45,9 @@ func (d *OrderDriver) GetAll(config *model.Pagination) ([]*Entities.Order, int64
 		return nil, 0, err
 	}
 
-	if err := d.db.Preload("OrderType").Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
+	if err := d.db.Preload("Package").Preload("Package.OrderType").Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Omit("password")
-	}).Preload("Service").Order("created_at desc").
+	}).Order("created_at desc").
 		Limit(config.PageSize).Offset((config.CurrentPage - 1) * config.PageSize).
 		Find(&selectOrder).Error; err != nil {
 		return nil, 0, err
@@ -60,7 +60,7 @@ func (d *OrderDriver) GetByID(id *string) (*Entities.Order, error) {
 	if err := d.db.Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Omit("password")
 
-	}).Preload("Service").Where("id = ?", id).First(&selectOrder).Error; err != nil {
+	}).Preload("Package").Preload("Package.OrderType").Where("id = ?", id).First(&selectOrder).Error; err != nil {
 		return nil, err
 	}
 	return &selectOrder, nil
@@ -82,7 +82,7 @@ func (d *OrderDriver) Delete(id *string) error {
 
 func (d *OrderDriver) GetAndUpdateByChargeID(chargeID string) error {
 	var selectOrder Entities.Order
-	if err := d.db.Joins("JOIN transactions ON transactions.id = orders.transaction_id").
+	if err := d.db.Preload("Package").Joins("JOIN transactions ON transactions.id = orders.transaction_id").
 		Where("transactions.charge_id = ?", chargeID).
 		First(&selectOrder).Error; err != nil {
 		return err
@@ -91,9 +91,8 @@ func (d *OrderDriver) GetAndUpdateByChargeID(chargeID string) error {
 	if err != nil {
 		return err
 	}
-
 	selectOrder.StatusID = processingOrder.ID
-	if err := d.db.Save(&selectOrder).Error; err != nil {
+	if err := d.db.Model(&selectOrder).Update("status_id", processingOrder.ID).Error; err != nil {
 		return err
 	}
 
@@ -110,7 +109,7 @@ func (d *OrderDriver) GetByStatusID(status *uuid.UUID, config *model.Pagination)
 	if err := d.db.Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Omit("password")
 
-	}).Preload("Service").Joins("JOIN statuses ON statuses.id = orders.status_id").
+	}).Preload("Package").Preload("Package.OrderType").Joins("JOIN statuses ON statuses.id = orders.status_id").
 		Where("statuses.id = ?", &status).
 		Limit(config.PageSize).Offset((config.CurrentPage - 1) * config.PageSize).Find(&selectOrder).Error; err != nil {
 		return nil, 0, err

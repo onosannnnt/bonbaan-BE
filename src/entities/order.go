@@ -25,4 +25,6 @@ type Order struct {
 	StatusID           uuid.UUID      `json:"status_id" gorm:"foreignKey:StatusID;default:null"`
 	Status             Status         `json:"status" gorm:"foreignKey:StatusID"`
 	Attachments        []Attachment   `json:"attachment" gorm:"foreignKey:OrderID"`
+	ServiceID          uuid.UUID      `json:"service_id" gorm:"foreignKey:ServiceID;default:null"`
+	Service            Service        `json:"service" gorm:"foreignKey:ServiceID"`
 }

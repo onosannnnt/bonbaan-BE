@@ -5,7 +5,7 @@ import (
 )
 
 func InitEntity(db *gorm.DB) error {
-	if err := db.AutoMigrate(&User{}, &Role{}, &Order{}, &Service{}, &Status{}, &Order{}, &Package{}, &Otp{}, &ResetPassword{}, &Category{}, &Attachment{}, &Transaction{}, &OrderType{}, &Review{}, &Review_utils{}, &Notification{}); err != nil {
+	if err := db.AutoMigrate(&User{}, &Role{}, &Order{}, &Service{}, &Status{}, &Order{}, &Package{}, &Otp{}, &ResetPassword{}, &Category{}, &Attachment{}, &Transaction{}, &OrderType{}, &Review{}, &Review_utils{}, &Notification{}, &VowRecord{}); err != nil {
 		panic(err)
 	}
 	if err := InitializeRoleData(db); err != nil {

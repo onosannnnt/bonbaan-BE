@@ -19,6 +19,6 @@ type VowRecord struct {
 	Service          Service   `json:"service" gorm:"foreignKey:ServiceID"`
 	VowOrderID       uuid.UUID `json:"vow_order_id" gorm:"foreignKey:VowOrderID;default:null"`
 	VowOrder         Order     `json:"vow_order" gorm:"foreignKey:VowOrderID"`
-	FulfilledOrderID Order     `json:"fulfilled" gorm:"default:null"`
+	FulfilledOrderID uuid.UUID `json:"fulfilled" gorm:"default:null"`
 	FulfillOrder     Order     `json:"fulfill_order" gorm:"foreignKey:FulfilledOrderID"`
 }
