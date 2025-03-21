@@ -3,8 +3,11 @@ package router
 import (
 	"github.com/gofiber/fiber/v2"
 	orderAdepter "github.com/onosannnnt/bonbaan-BE/src/adepters/order"
+	orderTypeAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/order_type"
+	packageAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/package"
 	serviceAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/service"
 	statusAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/status"
+	vowrecordAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/vow_record"
 	orderUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order"
 	statusUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/status"
 	"github.com/onosannnnt/bonbaan-BE/src/utils/middleware"
@@ -16,19 +19,24 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	statusRepo := statusAdapter.NewStatusDriver(db)
 	statusUsecase := statusUsecase.NewStatusService(statusRepo)
 
+	vowRecordRepo := vowrecordAdapter.NewVowRecordDriver(db)
+	packageRepo := packageAdapter.NewPackageDriver(db)
+	orderTypeRepo := orderTypeAdapter.NewOrderTypeDriver(db)
+
 	orderRepo := orderAdepter.NewOrderDriver(db, statusUsecase)
 	serviceRepo := serviceAdapter.NewServiceDriver(db)
-	orderUsecase := orderUsecase.NewOrderService(orderRepo, serviceRepo, statusRepo, db)
+	orderUsecase := orderUsecase.NewOrderService(orderRepo, serviceRepo, statusRepo, db, packageRepo, vowRecordRepo, orderTypeRepo)
 	orderHandler := orderAdepter.NewOrderHandler(orderUsecase)
 
 	order := app.Group("/orders")
-	order.Post("/", orderHandler.Insert)
+
 	order.Get("/", orderHandler.GetAll)
 	order.Get("/:id", orderHandler.GetByID)
 	order.Post("/webhook", orderHandler.Hook)
 
 	protected := order.Group("/")
 	protected.Use(middleware.IsAuth)
+	protected.Post("/", orderHandler.Insert)
 	protected.Patch("/:id", orderHandler.Update)
 	protected.Delete("/:id", orderHandler.Delete)
 
