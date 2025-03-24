@@ -107,10 +107,39 @@ func (d *ServiceDriver) GetPackagebyServiceID(serviceID *string) (*[]Entities.Pa
 }
 
 func (d *ServiceDriver) Update(service *Entities.Service) error {
-	if err := d.db.Model(&Entities.Service{}).Where("id = ?", service.ID).Updates(service).Error; err != nil {
-		return err
-	}
-	return nil
+    tx := d.db.Begin()
+    if err := tx.Model(&Entities.Service{}).Where("id = ?", service.ID).Updates(service).Error; err != nil {
+        tx.Rollback()
+        return err
+    }
+
+    // Update Categories association only if provided.
+	// fmt.Println(service.Categories)
+    if service.Categories != nil {
+        if err := tx.Model(service).Association("Categories").Replace(service.Categories); err != nil {
+            tx.Rollback()
+            return err
+        }
+    }
+
+    // Update Packages association only if provided.
+	// fmt.Println(service.Packages)
+    if service.Packages != nil {
+        if err := tx.Model(service).Association("Packages").Replace(service.Packages); err != nil {
+            tx.Rollback()
+            return err
+        }
+    }
+
+    // Update Attachments association only if provided.
+    if service.Attachments != nil {
+        if err := tx.Model(service).Association("Attachments").Replace(service.Attachments); err != nil {
+            tx.Rollback()
+            return err
+        }
+    }
+
+    return tx.Commit().Error
 }
 
 func (d *ServiceDriver) Delete(id *string) error {
