@@ -26,10 +26,11 @@ func (h *UserHandler) SendOTP(c *fiber.Ctx) error {
 	if err := c.BodyParser(&user); err != nil {
 		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
 	}
-	if err := h.userUsecase.InsertOTP(&user); err != nil {
+	code, err := h.userUsecase.InsertOTP(&user)
+	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
-	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, code)
 }
 
 // UserHandler function
