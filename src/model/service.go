@@ -17,6 +17,15 @@ type CreateServiceInput struct {
 	Packages    []PackageInput `json:"packages"`
 	Attachments []string       `json:"attachments,omitempty"`
 }
+type UpdateServiceInput struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Address     string         `json:"address"`
+	Categories  []string       `json:"categories"`
+	Packages    []PackageInput `json:"packages"`
+
+	CustomPackage bool `json:"custom_package"`
+}
 
 type AttachmentOutput struct {
 	ID  string `json:"id"`

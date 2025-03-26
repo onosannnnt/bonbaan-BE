@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -16,6 +18,7 @@ import (
 
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
+	AttachmentUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/attachment"
 	ServiceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
 	"github.com/onosannnnt/bonbaan-BE/src/utils"
 	"google.golang.org/api/option"
@@ -23,12 +26,16 @@ import (
 
 type ServiceHandler struct {
 	ServiceUsecase ServiceUsecase.ServiceUsecase
+	AttachmentUsecase AttachmentUsecase.AttachmentUsecase // ...new field
+
 }
 
-func NewServiceHandler(ServiceUsecase ServiceUsecase.ServiceUsecase) *ServiceHandler {
-	return &ServiceHandler{ServiceUsecase: ServiceUsecase}
+func NewServiceHandler(svcUsecase ServiceUsecase.ServiceUsecase, attachUsecase AttachmentUsecase.AttachmentUsecase) *ServiceHandler {
+    return &ServiceHandler{
+        ServiceUsecase:    svcUsecase,
+        AttachmentUsecase: attachUsecase,
+    }
 }
-
 func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	// Parse the multipart form:
 	form, err := c.MultipartForm()
@@ -83,7 +90,9 @@ func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	}
 
 	// Map category IDs to category objects.
+	log.Println(input.Categories)
 	for _, catID := range input.Categories {
+		log.Println(catID)
 		uid, err := uuid.Parse(catID)
 		if err != nil {
 			return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid category id", err, nil)
@@ -218,27 +227,241 @@ func (h *ServiceHandler) GetPackagesbyServiceID(c *fiber.Ctx) error {
 }
 
 func (h *ServiceHandler) UpdateService(c *fiber.Ctx) error {
-	id := c.Params("id")
-	var service Entities.Service
+    id := c.Params("id")
 
-	if err := c.BodyParser(&service); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid request body", err, nil)
+    // Parse JSON fields for basic info and associations.
+    var input model.UpdateServiceInput
+    form, err := c.MultipartForm()
+    if err != nil {
+        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Error parsing form data", err, nil)
+    }
+
+    // If packages are passed via form-data as JSON, parse them:
+    if v, exists := form.Value["packages"]; exists && len(v) > 0 {
+        if err := json.Unmarshal([]byte(v[0]), &input.Packages); err != nil {
+            return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid packages data", err, nil)
+        }
+    }
+
+    // Use BodyParser to fill in pointer fields (Name, Description, Address, etc.)
+    if err := c.BodyParser(&input); err != nil {
+        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid request body", err, nil)
+    }
+
+    // Retrieve the existing service from the database.
+    existingService, err := h.ServiceUsecase.GetByID(&id)
+    if err != nil {
+        return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Service not found", err, nil)
+    }
+    if existingService == nil {
+        return utils.ResponseJSON(c, fiber.StatusNotFound, "Service not found", nil, nil)
+    }
+
+    // Update basic fields only if new data was provided.
+	if input.Name != "" {
+		existingService.Name = input.Name
 	}
-
-	// Convert the id to uuid.UUID
-	uuidID, err := uuid.Parse(id)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format", err, nil)
+	if input.Description != "" {
+		existingService.Description = input.Description
 	}
-
-	service.ID = uuidID // Ensure the ID is set to the one from the URL
-
-	if err := h.ServiceUsecase.UpdateService(&service); err != nil {
-		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to update service", err, nil)
+	if input.Address != "" {
+		existingService.Address = input.Address
 	}
+    // ---------------------------------------------------------------------------------------
+    // 1) Update Categories (replace associations) only if new categories are provided.
+    // ---------------------------------------------------------------------------------------
+    if len(input.Categories) > 0 {
+        updatedCategories := []Entities.Category{}
+        for _, catID := range input.Categories {
+            uid, err := uuid.Parse(catID)
+            if err != nil {
+                return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid category id", err, nil)
+            }
+            updatedCategories = append(updatedCategories, Entities.Category{ID: uid})
+        }
+        existingService.Categories = updatedCategories
+    }
 
-	return utils.ResponseJSON(c, fiber.StatusOK, "Service updated successfully", nil, service)
+    // ---------------------------------------------------------------------------------------
+    // 2) Update Packages (replace associations) only if new packages data is provided.
+    // ---------------------------------------------------------------------------------------
+    if len(input.Packages) > 0 {
+        updatedPackages := []Entities.Package{}
+        uniqueOrderTypeIDs := make(map[uuid.UUID]bool)
+        for _, pkgInput := range input.Packages {
+            orderTypeID, err := uuid.Parse(pkgInput.OrderTypeID)
+            if err != nil {
+                return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid package order type id", err, nil)
+            }
+            pkg := Entities.Package{
+                Name:        pkgInput.Name,
+                Item:        pkgInput.Item,
+                Price:       pkgInput.Price,
+                Description: pkgInput.Description,
+                OrderTypeID: orderTypeID,
+            }
+            updatedPackages = append(updatedPackages, pkg)
+            uniqueOrderTypeIDs[orderTypeID] = true
+        }
+
+        // If the user wants a "Custom Package"
+        if input.CustomPackage {
+            for orderTypeID := range uniqueOrderTypeIDs {
+                customPkg := Entities.Package{
+                    Name:        "Custom Package",
+                    Description: "Custom package to your needs",
+                    Price:       0,
+                    OrderTypeID: orderTypeID,
+                }
+                updatedPackages = append(updatedPackages, customPkg)
+            }
+        }
+        existingService.Packages = updatedPackages
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // 3) Handle Attachment updates:
+    //    - If no new attachment data or attachment_ids are provided, keep the existing ones.
+    // ---------------------------------------------------------------------------------------
+
+    // Parse the list of attachment IDs the user wants to keep, if provided.
+    keepIDs := []string{}
+    if v, exists := form.Value["attachments"]; exists && len(v) > 0 {
+        keepIDs = v
+    }
+
+    // 3.1) Remove attachments that are NOT in keepIDs.
+    // (Delete from Cloud Storage + DB)
+    if len(keepIDs) > 0 {
+        for _, oldAttach := range existingService.Attachments {
+            oldAttachID := oldAttach.ID.String()
+            if !stringInSlice(oldAttachID, keepIDs) {
+                if err := deleteAttachmentFromStorage(oldAttach.URL); err != nil {
+                    fmt.Printf("[WARN] Failed to remove from storage: %v\n", err)
+                }
+                if err := h.AttachmentUsecase.Delete(&oldAttachID); err != nil {
+                    fmt.Printf("[WARN] Failed to remove from DB: %v\n", err)
+                }
+            }
+        }
+        // 3.2) Build the final slice of attachments that are kept.
+        keptAttachments := []Entities.Attachment{}
+        for _, oldAttach := range existingService.Attachments {
+            if stringInSlice(oldAttach.ID.String(), keepIDs) {
+                keptAttachments = append(keptAttachments, oldAttach)
+            }
+        }
+        existingService.Attachments = keptAttachments
+    }
+
+    // 3.3) Check for any new attachments in "attachment_newfiles" and add them.
+    newAttachmentHeaders := form.File["attachment_newfiles"]
+    if len(newAttachmentHeaders) > 0 {
+        ctx := context.Background()
+        client, err := storage.NewClient(ctx, option.WithCredentialsFile(config.BucketKey))
+        if err != nil {
+            return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to create storage client", err, nil)
+        }
+        defer client.Close()
+        bucketName := config.BucketName
+        for _, fileHeader := range newAttachmentHeaders {
+            srcFile, err := fileHeader.Open()
+            if err != nil {
+                return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Error opening file", err, nil)
+            }
+            objectName := fmt.Sprintf("images/%d_%s", time.Now().UnixNano(), fileHeader.Filename)
+            token := uuid.New().String()
+            wc := client.Bucket(bucketName).Object(objectName).NewWriter(ctx)
+            wc.Metadata = map[string]string{
+                "firebaseStorageDownloadTokens": token,
+            }
+            if _, err := io.Copy(wc, srcFile); err != nil {
+                srcFile.Close()
+                wc.Close()
+                return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to write file to bucket", err, nil)
+            }
+            srcFile.Close()
+            if err := wc.Close(); err != nil {
+                return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to close writer", err, nil)
+            }
+            shareableURL := fmt.Sprintf(
+                "https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
+                bucketName,
+                url.QueryEscape(objectName),
+                token,
+            )
+            newAttach := Entities.Attachment{
+                ID:        uuid.New(),
+                URL:       shareableURL,
+                ServiceID: existingService.ID,
+            }
+            existingService.Attachments = append(existingService.Attachments, newAttach)
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // 4) Persist the updated service.
+    // ---------------------------------------------------------------------------------------
+    if err := h.ServiceUsecase.UpdateService(existingService); err != nil {
+        return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to update service", err, nil)
+    }
+
+    return utils.ResponseJSON(c, fiber.StatusOK, "Service updated successfully", nil, existingService)
 }
+// stringInSlice is a small helper to see if a string is in a slice
+func stringInSlice(str string, list []string) bool {
+    for _, item := range list {
+        if item == str {
+            return true
+        }
+    }
+    return false
+}
+
+// deleteAttachmentFromStorage deletes an object from Cloud Storage given its download URL.
+func deleteAttachmentFromStorage(fileURL string) error {
+    ctx := context.Background()
+    client, err := storage.NewClient(ctx, option.WithCredentialsFile(config.BucketKey))
+    if err != nil {
+        return err
+    }
+    defer client.Close()
+
+    // parseObjectNameFromURL is your helper function from your existing code
+    objectName, err := parseObjectNameFromURL(fileURL)
+    if err != nil {
+        return err
+    }
+    if objectName == "" {
+        return fmt.Errorf("object name is empty")
+    }
+
+    bucketName := config.BucketName
+    return client.Bucket(bucketName).Object(objectName).Delete(ctx)
+}
+
+func parseObjectNameFromURL(fileURL string) (string, error) {
+	u, err := url.Parse(fileURL)
+	if err != nil {
+		return "", err
+	}
+
+	prefix := fmt.Sprintf("/v0/b/%s/o/", config.BucketName)
+	if !strings.HasPrefix(u.Path, prefix) {
+		return "", fmt.Errorf("unexpected URL format")
+	}
+
+	encodedObjectName := strings.TrimPrefix(u.Path, prefix)
+
+	objectName, err := url.QueryUnescape(encodedObjectName)
+	if err != nil {
+		return "", err
+	}
+
+	return objectName, nil
+}
+
+
 
 func (h *ServiceHandler) DeleteService(c *fiber.Ctx) error {
 	id := c.Params("id")
