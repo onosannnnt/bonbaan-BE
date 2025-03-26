@@ -18,7 +18,7 @@ import (
 
 // ส่วนที่ต่อกับ input handler
 type UserUsecase interface {
-	InsertOTP(user *Entities.User) error
+	InsertOTP(user *Entities.User) (string, error)
 	Register(user *model.CreateUserRequest) error
 	Login(user *Entities.User) (token *string, err error)
 	Me(UserID *string) (user *Entities.User, err error)
@@ -51,7 +51,7 @@ func NewUserService(userRepo UserRepository, otpRepo OtpRepository, resetPasswor
 	}
 }
 
-func (s *UserService) InsertOTP(user *Entities.User) error {
+func (s *UserService) InsertOTP(user *Entities.User) (string, error) {
 	s.otpRepo.DeleteByEmail(&user.Email)
 	otp := &Entities.Otp{
 		Email: user.Email,
@@ -71,7 +71,11 @@ func (s *UserService) InsertOTP(user *Entities.User) error {
 	m.SetHeader("Subject", "One-time password!")
 	m.SetBody("text/html", text)
 	utils.SendingMail(m)
-	return s.otpRepo.Insert(otp)
+	err := s.otpRepo.Insert(otp)
+	if err != nil {
+		return "000000", err
+	}
+	return otp.Otp, nil
 }
 
 // ส่วนของการทำงานของ UserService
