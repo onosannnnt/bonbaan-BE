@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
+	categoryAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/category"
 	notificationAdepter "github.com/onosannnnt/bonbaan-BE/src/adepters/notification"
 	otpDriver "github.com/onosannnnt/bonbaan-BE/src/adepters/otp"
 	resetpasswordDriver "github.com/onosannnnt/bonbaan-BE/src/adepters/reset_password"
@@ -18,11 +19,13 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 	notificationUsecase := notificationUsecase.NewNotificationService(notificationRepo)
 	notificationHandler := notificationAdepter.NewNotificationHandler(notificationUsecase)
 
+	categoryRepo := categoryAdapter.NewCategoryDriver(db)
+
 	userRepo := userAdepter.NewUserDriver(db)
 	otpRepo := otpDriver.NewOtpDriver(db)
 	roleRepo := roleAdapter.NewRoleDriver(db)
 	resetPasswordRepo := resetpasswordDriver.NewOtpDriver(db)
-	userUsecase := userUsecase.NewUserService(userRepo, otpRepo, resetPasswordRepo, roleRepo)
+	userUsecase := userUsecase.NewUserService(userRepo, otpRepo, resetPasswordRepo, roleRepo, categoryRepo)
 	userHandler := userAdepter.NewUserHandler(userUsecase)
 
 	user := app.Group("/users")
@@ -43,6 +46,9 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 	protect.Patch("/change-password", userHandler.ChangePassword)
 	protect.Patch("/", userHandler.Update)
 	protect.Get("/:id/notifications", notificationHandler.GetByUserID)
+	protect.Post("/:id/interest", userHandler.InsertInterest)
+	protect.Get("/:id/interest", userHandler.GetInterestByUserID)
+	protect.Delete("/interest/:id", userHandler.DeleteInterest)
 
 	admin := protect.Group("/")
 	admin.Use(middleware.IsAdmin)
