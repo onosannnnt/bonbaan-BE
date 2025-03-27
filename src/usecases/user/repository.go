@@ -10,6 +10,8 @@ type UserRepository interface {
 	Update(user *Entities.User) (*Entities.User, error)
 	GetAll() (*[]Entities.User, error)
 	Delete(id *string) error
+	GetInterestByUserID(id *string) (*Entities.User, error)
+	DeleteInterest(userID *string, categoryID *string) error
 }
 
 type OtpRepository interface {

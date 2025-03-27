@@ -10,6 +10,7 @@ import (
 	"github.com/onosannnnt/bonbaan-BE/src/constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
+	categoryUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/category"
 	roleUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/role"
 	"github.com/onosannnnt/bonbaan-BE/src/utils"
 	"golang.org/x/crypto/bcrypt"
@@ -31,6 +32,9 @@ type UserUsecase interface {
 	Delete(UserID *string) error
 	Update(user *model.UpdateRequest) (*Entities.User, error)
 	AdminRegister(user *model.CreateUserRequest) error
+	InsertInterest(user *string, category *[]string) error
+	GetInterestByUserID(UserID *string) (*[]*Entities.Category, error)
+	DeleteInterest(user *string, category *string) error
 }
 
 // ส่วนที่ต่อกับ driver handler
@@ -39,15 +43,17 @@ type UserService struct {
 	otpRepo           OtpRepository
 	resetPasswordRepo ResetPasswordRepository
 	roleRepo          roleUsecase.RoleRepository
+	categoryRepo      categoryUsecase.CategoryRepository
 }
 
 // สร้าง instance ของ UserService
-func NewUserService(userRepo UserRepository, otpRepo OtpRepository, resetPasswordRepo ResetPasswordRepository, roleRepo roleUsecase.RoleRepository) UserUsecase {
+func NewUserService(userRepo UserRepository, otpRepo OtpRepository, resetPasswordRepo ResetPasswordRepository, roleRepo roleUsecase.RoleRepository, categoryRepo categoryUsecase.CategoryRepository) UserUsecase {
 	return &UserService{
 		userRepo:          userRepo,
 		otpRepo:           otpRepo,
 		resetPasswordRepo: resetPasswordRepo,
 		roleRepo:          roleRepo,
+		categoryRepo:      categoryRepo,
 	}
 }
 
@@ -291,4 +297,35 @@ func (s *UserService) AdminRegister(user *model.CreateUserRequest) error {
 		RoleID:    role.ID,
 	}
 	return s.userRepo.Insert(verifyUser)
+}
+func (s *UserService) InsertInterest(user *string, category *[]string) error {
+	selectUser, err := s.userRepo.GetByID(user)
+	if err != nil {
+		return err
+	}
+	for _, categoryName := range *category {
+		category, err := s.categoryRepo.GetByID(&categoryName)
+		if err != nil {
+			return err
+		}
+		selectUser.Category = append(selectUser.Category, category)
+	}
+	_, err = s.userRepo.Update(selectUser)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *UserService) GetInterestByUserID(UserID *string) (*[]*Entities.Category, error) {
+	selectUser, err := s.userRepo.GetInterestByUserID(UserID)
+	if err != nil {
+		return nil, err
+	}
+	categories := selectUser.Category
+	return &categories, nil
+}
+
+func (s *UserService) DeleteInterest(user *string, category *string) error {
+	return s.userRepo.DeleteInterest(user, category)
 }

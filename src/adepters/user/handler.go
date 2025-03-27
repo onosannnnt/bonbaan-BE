@@ -191,3 +191,50 @@ func (h *UserHandler) AdminRegister(c *fiber.Ctx) error {
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
 }
+
+func (h *UserHandler) InsertInterest(c *fiber.Ctx) error {
+	type InsertInterest struct {
+		Interest []string `json:"categories"`
+	}
+	interest := InsertInterest{}
+	if err := c.BodyParser(&interest); err != nil {
+		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
+	}
+	userID := c.Locals(constance.UserID_ctx).(string)
+	if userID == "" {
+		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
+	}
+	err := h.userUsecase.InsertInterest(&userID, &interest.Interest)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusCreated, "success", nil, nil)
+}
+
+func (h *UserHandler) GetInterestByUserID(c *fiber.Ctx) error {
+	userID := c.Locals(constance.UserID_ctx).(string)
+	if userID == "" {
+		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
+	}
+	user, err := h.userUsecase.GetInterestByUserID(&userID)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, user)
+}
+
+func (h *UserHandler) DeleteInterest(c *fiber.Ctx) error {
+	interest := c.Params("id")
+	if interest == "" {
+		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", nil, nil)
+	}
+	userID := c.Locals(constance.UserID_ctx).(string)
+	if userID == "" {
+		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
+	}
+	err := h.userUsecase.DeleteInterest(&userID, &interest)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
+}
