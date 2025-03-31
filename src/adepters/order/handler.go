@@ -16,17 +16,20 @@ import (
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	orderUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order"
+	vowRecordUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/vow_record"
 	"github.com/onosannnnt/bonbaan-BE/src/utils"
 	"google.golang.org/api/option"
 )
 
 type OrderHandler struct {
-	OrderUsecase orderUsecase.OrderUsecase
+	OrderUsecase     orderUsecase.OrderUsecase
+	VowRecordUsecase vowRecordUsecase.VowRecordService
 }
 
-func NewOrderHandler(usecase orderUsecase.OrderUsecase) *OrderHandler {
+func NewOrderHandler(usecase orderUsecase.OrderUsecase, vowRecordUsecase vowRecordUsecase.VowRecordService) *OrderHandler {
 	return &OrderHandler{
-		OrderUsecase: usecase,
+		OrderUsecase:     usecase,
+		VowRecordUsecase: vowRecordUsecase,
 	}
 }
 
@@ -245,4 +248,57 @@ func (h *OrderHandler) AcceptOrder(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to confirm order", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
+}
+
+func (h *OrderHandler) GetByUserID(c *fiber.Ctx) error {
+	userID := c.Params("id")
+	if userID == "" {
+		userID = c.Locals(constance.UserID_ctx).(string)
+	}
+	config := model.Pagination{}
+	status := c.Query("status")
+	if status != "" {
+		statusID, err := uuid.Parse(status)
+		if err != nil {
+			return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for status", err, nil)
+		}
+		order, pagination, err := h.OrderUsecase.GetByUserIDAndStatusID(&userID, &statusID, &config)
+		if err != nil {
+			return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get order", err, nil)
+		}
+		return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, fiber.Map{
+			"orders":     order,
+			"pagination": pagination,
+		})
+	}
+	if err := c.QueryParser(&config); err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request query", err, nil)
+	}
+	order, pagination, err := h.OrderUsecase.GetByUserID(&userID, &config)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get order", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, fiber.Map{
+		"orders":     order,
+		"pagination": pagination,
+	})
+}
+
+func (h *OrderHandler) GetByVowRecordByUserID(c *fiber.Ctx) error {
+	userID := c.Params("id")
+	if userID == "" {
+		userID = c.Locals(constance.UserID_ctx).(string)
+	}
+	config := model.Pagination{}
+	if err := c.QueryParser(&config); err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request query", err, nil)
+	}
+	vowRecord, pagination, err := h.VowRecordUsecase.GetByUserID(&userID, &config)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get order", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, fiber.Map{
+		"orders":     vowRecord,
+		"pagination": pagination,
+	})
 }

@@ -116,3 +116,38 @@ func (d *OrderDriver) GetByStatusID(status *uuid.UUID, config *model.Pagination)
 	}
 	return selectOrder, totalRecords, nil
 }
+
+func (d *OrderDriver) GetByUserID(userID *string, config *model.Pagination) ([]*Entities.Order, int64, error) {
+	var selectOrder []*Entities.Order
+	var totalRecords int64
+
+	if err := d.db.Model(&Entities.Order{}).Count(&totalRecords).Error; err != nil {
+		return nil, 0, err
+	}
+	if err := d.db.Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Omit("password")
+
+	}).Preload("Package").Preload("Package.OrderType").Where("user_id = ?", userID).
+		Limit(config.PageSize).Offset((config.CurrentPage - 1) * config.PageSize).Find(&selectOrder).Error; err != nil {
+		return nil, 0, err
+	}
+	return selectOrder, totalRecords, nil
+}
+
+func (d *OrderDriver) GetByUserIDAndStatusID(userID *string, statusID *uuid.UUID, config *model.Pagination) ([]*Entities.Order, int64, error) {
+	var selectOrder []*Entities.Order
+	var totalRecords int64
+
+	if err := d.db.Model(&Entities.Order{}).Count(&totalRecords).Error; err != nil {
+		return nil, 0, err
+	}
+	if err := d.db.Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Omit("password")
+
+	}).Preload("Package").Preload("Package.OrderType").Joins("JOIN statuses ON statuses.id = orders.status_id").
+		Where("user_id = ? AND statuses.id = ?", userID, statusID).
+		Limit(config.PageSize).Offset((config.CurrentPage - 1) * config.PageSize).Find(&selectOrder).Error; err != nil {
+		return nil, 0, err
+	}
+	return selectOrder, totalRecords, nil
+}

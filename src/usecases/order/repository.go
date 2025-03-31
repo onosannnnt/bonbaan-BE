@@ -15,4 +15,6 @@ type OrderRepository interface {
 	GetByStatusID(statusID *uuid.UUID, config *model.Pagination) ([]*Entities.Order, int64, error)
 	GetDefaultStatus() (*Entities.Status, error)
 	GetAndUpdateByChargeID(chargeID string) error
+	GetByUserID(userID *string, config *model.Pagination) ([]*Entities.Order, int64, error)
+	GetByUserIDAndStatusID(userID *string, statusID *uuid.UUID, config *model.Pagination) ([]*Entities.Order, int64, error)
 }
