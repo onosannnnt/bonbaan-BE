@@ -42,7 +42,7 @@ func (d *UserDriver) GetByEmailOrUsername(user *Entities.User) (*Entities.User, 
 
 func (d *UserDriver) GetByID(id *string) (*Entities.User, error) {
 	var selectUser Entities.User
-	if err := d.db.Where("id = ?", id).First(&selectUser).Error; err != nil {
+	if err := d.db.Omit("password").Preload("Role").Where("id = ?", id).First(&selectUser).Error; err != nil {
 		return nil, err
 	}
 	return &selectUser, nil
