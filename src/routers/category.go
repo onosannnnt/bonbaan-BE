@@ -14,19 +14,18 @@ func InitCategoryRouter(app *fiber.App, db *gorm.DB) {
 
 	categoryRouter := app.Group("/categories")
 
-
 	categoryRouter.Get("/", handler.GetAllCategory)
 	categoryRouter.Get("/:id", handler.GetByCategoryID)
 	categoryRouter.Get("/:id/services", handler.GetServicesByCategoryID)
 
 	categoryRouter.Post("/", handler.CreateCategory)
-	categoryRouter.Put("/:id", handler.UpdateCategory)
+	categoryRouter.Patch("/:id", handler.UpdateCategory)
 	categoryRouter.Delete("/:id", handler.DeleteCategory)
 
 	// service_category := categoryRouter.Group("/service") // Define a sub-group for service-related routes
 	// service_category.Post("/", handler.AddServiceToCategory) // add service to category
 	// service_category.Delete("/", handler.RemoveServiceFromCategory) // remove service from category
-// 	service_category.Get("/getservices/:id", handler.GetServicesByCategoryID) // get services by category ID
-// 	service_category.Get("/getcategories/:id", handler.GetCategoriesByServiceID)//  get categories by service ID
-	
+	// 	service_category.Get("/getservices/:id", handler.GetServicesByCategoryID) // get services by category ID
+	// 	service_category.Get("/getcategories/:id", handler.GetCategoriesByServiceID)//  get categories by service ID
+
 }
