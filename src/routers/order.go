@@ -10,6 +10,7 @@ import (
 	vowrecordAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/vow_record"
 	orderUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order"
 	statusUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/status"
+	vowRecordUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/vow_record"
 	"github.com/onosannnnt/bonbaan-BE/src/utils/middleware"
 	"gorm.io/gorm"
 )
@@ -20,13 +21,14 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	statusUsecase := statusUsecase.NewStatusService(statusRepo)
 
 	vowRecordRepo := vowrecordAdapter.NewVowRecordDriver(db)
+	vowRecordUsecase := vowRecordUsecase.NewVowRecordService(vowRecordRepo)
 	packageRepo := packageAdapter.NewPackageDriver(db)
 	orderTypeRepo := orderTypeAdapter.NewOrderTypeDriver(db)
 
 	orderRepo := orderAdepter.NewOrderDriver(db, statusUsecase)
 	serviceRepo := serviceAdapter.NewServiceDriver(db)
 	orderUsecase := orderUsecase.NewOrderService(orderRepo, serviceRepo, statusRepo, db, packageRepo, vowRecordRepo, orderTypeRepo)
-	orderHandler := orderAdepter.NewOrderHandler(orderUsecase)
+	orderHandler := orderAdepter.NewOrderHandler(orderUsecase, *vowRecordUsecase)
 
 	order := app.Group("/orders")
 
