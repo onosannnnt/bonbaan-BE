@@ -246,3 +246,34 @@ func (h *OrderHandler) AcceptOrder(c *fiber.Ctx) error {
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
 }
+
+func (h *OrderHandler) GetByUserID(c *fiber.Ctx) error {
+	userID := c.Params("id")
+	config := model.Pagination{}
+	status := c.Query("status")
+	if status != "" {
+		statusID, err := uuid.Parse(status)
+		if err != nil {
+			return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid UUID format for status", err, nil)
+		}
+		order, pagination, err := h.OrderUsecase.GetByUserIDAndStatusID(&userID, &statusID, &config)
+		if err != nil {
+			return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get order", err, nil)
+		}
+		return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, fiber.Map{
+			"orders":     order,
+			"pagination": pagination,
+		})
+	}
+	if err := c.QueryParser(&config); err != nil {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request query", err, nil)
+	}
+	order, pagination, err := h.OrderUsecase.GetByUserID(&userID, &config)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get order", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, fiber.Map{
+		"orders":     order,
+		"pagination": pagination,
+	})
+}

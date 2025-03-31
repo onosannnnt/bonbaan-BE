@@ -33,6 +33,8 @@ type OrderUsecase interface {
 	InsertCustomOrder(order *model.OrderInputRequest) error
 	AcceptOrder(data *model.ConfirmOrderRequest) error
 	ApproveOrder(id *string) error
+	GetByUserID(userID *string, config *model.Pagination) ([]*Entities.Order, *model.Pagination, error)
+	GetByUserIDAndStatusID(userID *string, statusID *uuid.UUID, config *model.Pagination) ([]*Entities.Order, *model.Pagination, error)
 }
 
 type OrderService struct {
@@ -402,4 +404,56 @@ func (s *OrderService) AcceptOrder(data *model.ConfirmOrderRequest) error {
 	order.Status = *status
 	order.Price = data.Price
 	return s.orderRepo.Update(&data.OrderID, order)
+}
+
+func (s *OrderService) GetByUserID(userID *string, config *model.Pagination) ([]*Entities.Order, *model.Pagination, error) {
+	if config.PageSize <= 0 {
+		config.PageSize = 10
+	}
+	if config.CurrentPage <= 0 {
+		config.CurrentPage = 1
+	}
+	orders, totalRecords, err := s.orderRepo.GetByUserID(userID, config)
+	if err != nil {
+		return nil, nil, err
+	}
+	var totalPages int64
+	if totalRecords%int64(config.PageSize) == 0 {
+		totalPages = totalRecords / int64(config.PageSize)
+	} else {
+		totalPages = totalRecords/int64(config.PageSize) + 1
+	}
+	pagination := &model.Pagination{
+		CurrentPage:  config.CurrentPage,
+		PageSize:     config.PageSize,
+		TotalPages:   int(totalPages),
+		TotalRecords: int(totalRecords),
+	}
+	return orders, pagination, nil
+}
+
+func (s *OrderService) GetByUserIDAndStatusID(userID *string, statusID *uuid.UUID, config *model.Pagination) ([]*Entities.Order, *model.Pagination, error) {
+	if config.PageSize <= 0 {
+		config.PageSize = 10
+	}
+	if config.CurrentPage <= 0 {
+		config.CurrentPage = 1
+	}
+	orders, totalRecords, err := s.orderRepo.GetByUserIDAndStatusID(userID, statusID, config)
+	if err != nil {
+		return nil, nil, err
+	}
+	var totalPages int64
+	if totalRecords%int64(config.PageSize) == 0 {
+		totalPages = totalRecords / int64(config.PageSize)
+	} else {
+		totalPages = totalRecords/int64(config.PageSize) + 1
+	}
+	pagination := &model.Pagination{
+		CurrentPage:  config.CurrentPage,
+		PageSize:     config.PageSize,
+		TotalPages:   int(totalPages),
+		TotalRecords: int(totalRecords),
+	}
+	return orders, pagination, nil
 }
