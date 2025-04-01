@@ -20,7 +20,7 @@ import (
 )
 
 type OrderUsecase interface {
-	Insert(order *model.OrderInputRequest) error
+	Insert(order *model.OrderInputRequest) (*Entities.Order, error)
 	GetAll(config *model.Pagination) ([]*Entities.Order, *model.Pagination, error)
 	GetByID(id *string) (*Entities.Order, error)
 	GetByStatus(statusID *uuid.UUID, config *model.Pagination) ([]*Entities.Order, *model.Pagination, error)
@@ -59,21 +59,21 @@ func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.Servi
 	}
 }
 
-func (s *OrderService) Insert(order *model.OrderInputRequest) error {
+func (s *OrderService) Insert(order *model.OrderInputRequest) (*Entities.Order, error) {
 	status, err := s.statusRepo.GetByName(&constance.Status_Unpaid)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	packages, err := s.packageRepo.GetByID(&order.PackageID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if packages == nil {
-		return errors.New("package not found")
+		return nil, errors.New("package not found")
 	}
 	client, err := omise.NewClient(config.OmisePublicKey, config.OmiseSecretKey)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	source := &omise.Source{}
 	tx := s.db.Begin()
@@ -88,7 +88,7 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) error {
 		Type:     "promptpay",
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	charge := &omise.Charge{}
 	err = client.Do(charge, &operations.CreateCharge{
@@ -98,7 +98,7 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) error {
 	})
 	if err != nil {
 		tx.Rollback()
-		return err
+		return nil, err
 	}
 	var transaction Entities.Transaction
 	transaction.Price = order.Price
@@ -115,16 +115,16 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) error {
 	err = s.orderRepo.Insert(&orderEntity)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return nil, err
 	}
 	orderType, err := s.orderTypeRepo.GetByID(&order.OrderTypeID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if orderType.Name == constance.Types_Vow {
 		parsedDate, err := time.Parse("2006-01-02", order.Deadline)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		vowRecord := Entities.VowRecord{
 			Vow:        order.Vow,
@@ -136,7 +136,7 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) error {
 		}
 		err = s.vowRecordRepo.Insert(&vowRecord)
 		if err != nil {
-			return errors.New("failed to insert vow record")
+			return nil, errors.New("failed to insert vow record")
 		}
 	} else if orderType.Name == constance.Types_Fulfill {
 		vowRecord := Entities.VowRecord{
@@ -144,11 +144,11 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) error {
 		}
 		err = s.vowRecordRepo.Update(&order.VowRecordID, &vowRecord)
 		if err != nil {
-			return errors.New("failed to update vow record")
+			return nil, errors.New("failed to update vow record")
 		}
 	}
 	tx.Commit()
-	return nil
+	return &orderEntity, nil
 }
 
 func (s *OrderService) Hook(ChargeID *string) error {

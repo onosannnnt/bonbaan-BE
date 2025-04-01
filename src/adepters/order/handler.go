@@ -39,8 +39,11 @@ func (h *OrderHandler) Insert(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
 	}
 	order.UserID = c.Locals(constance.UserID_ctx).(string)
-	h.OrderUsecase.Insert(&order)
-	return utils.ResponseJSON(c, fiber.StatusCreated, "Success", nil, nil)
+	insertOrder, err := h.OrderUsecase.Insert(&order)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to insert order", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusCreated, "Success", nil, insertOrder)
 }
 
 func (h *OrderHandler) GetAll(c *fiber.Ctx) error {
