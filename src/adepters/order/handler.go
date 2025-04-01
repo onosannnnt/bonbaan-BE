@@ -40,7 +40,7 @@ func (h *OrderHandler) Insert(c *fiber.Ctx) error {
 	}
 	order.UserID = c.Locals(constance.UserID_ctx).(string)
 	h.OrderUsecase.Insert(&order)
-	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
+	return utils.ResponseJSON(c, fiber.StatusCreated, "Success", nil, nil)
 }
 
 func (h *OrderHandler) GetAll(c *fiber.Ctx) error {
@@ -233,7 +233,7 @@ func (h *OrderHandler) InsertCustomOrder(c *fiber.Ctx) error {
 	}
 	order.UserID = c.Locals(constance.UserID_ctx).(string)
 	h.OrderUsecase.InsertCustomOrder(&order)
-	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
+	return utils.ResponseJSON(c, fiber.StatusCreated, "Success", nil, nil)
 }
 
 func (h *OrderHandler) AcceptOrder(c *fiber.Ctx) error {
