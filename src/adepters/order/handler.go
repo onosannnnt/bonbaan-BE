@@ -235,7 +235,10 @@ func (h *OrderHandler) InsertCustomOrder(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
 	}
 	order.UserID = c.Locals(constance.UserID_ctx).(string)
-	h.OrderUsecase.InsertCustomOrder(&order)
+	err := h.OrderUsecase.InsertCustomOrder(&order)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to insert order", err, nil)
+	}
 	return utils.ResponseJSON(c, fiber.StatusCreated, "Success", nil, nil)
 }
 
