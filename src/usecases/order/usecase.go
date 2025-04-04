@@ -14,9 +14,11 @@ import (
 	NotificationUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/notification"
 	orderTypeUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/order_type"
 	packageUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/package"
+	recommendationUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/recommendation"
 	serviceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
 	statusUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/status"
 	vowRecordUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/vow_record"
+
 	"gorm.io/gorm"
 )
 
@@ -47,9 +49,10 @@ type OrderService struct {
 	vowRecordRepo    vowRecordUsecase.VowRecordRepository
 	orderTypeRepo    orderTypeUsecase.OrderTypeRepository
 	notificationRepo NotificationUsecase.NotificationRepository
+	recommendationRepo recommendationUsecase.RecommendationRepository 
 }
 
-func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.ServiceRepository, statusRepo statusUsecase.StatusRepository, db *gorm.DB, packageRepo packageUsecase.PackageRepository, vowRecordRepo vowRecordUsecase.VowRecordRepository, orderTypeRepo orderTypeUsecase.OrderTypeRepository, notificationRepo NotificationUsecase.NotificationRepository) OrderUsecase {
+func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.ServiceRepository, statusRepo statusUsecase.StatusRepository, db *gorm.DB, packageRepo packageUsecase.PackageRepository, vowRecordRepo vowRecordUsecase.VowRecordRepository, orderTypeRepo orderTypeUsecase.OrderTypeRepository, notificationRepo NotificationUsecase.NotificationRepository, recommendationRepo recommendationUsecase.RecommendationRepository,) OrderUsecase {
 	return &OrderService{
 		db:               db,
 		orderRepo:        orderRepo,
@@ -59,97 +62,127 @@ func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.Servi
 		vowRecordRepo:    vowRecordRepo,
 		orderTypeRepo:    orderTypeRepo,
 		notificationRepo: notificationRepo,
+        recommendationRepo: recommendationRepo,
 	}
 }
 
 func (s *OrderService) Insert(order *model.OrderInputRequest) (*Entities.Order, error) {
-	status, err := s.statusRepo.GetByName(&constance.Status_Unpaid)
-	if err != nil {
-		return nil, err
-	}
-	packages, err := s.packageRepo.GetByID(&order.PackageID)
-	if err != nil {
-		return nil, err
-	}
-	if packages == nil {
-		return nil, errors.New("package not found")
-	}
-	client, err := omise.NewClient(config.OmisePublicKey, config.OmiseSecretKey)
-	if err != nil {
-		return nil, err
-	}
-	source := &omise.Source{}
-	tx := s.db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
+    status, err := s.statusRepo.GetByName(&constance.Status_Unpaid)
+    if err != nil {
+        return nil, err
+    }
+    packages, err := s.packageRepo.GetByID(&order.PackageID)
+    if err != nil {
+        return nil, err
+    }
+    if packages == nil {
+        return nil, errors.New("package not found")
+    }
+    client, err := omise.NewClient(config.OmisePublicKey, config.OmiseSecretKey)
+    if err != nil {
+        return nil, err
+    }
+    source := &omise.Source{}
+    tx := s.db.Begin()
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
+    err = client.Do(source, &operations.CreateSource{
+        Amount:   int64(order.Price * 100),
+        Currency: "thb",
+        Type:     "promptpay",
+    })
+    if err != nil {
+        return nil, err
+    }
+    charge := &omise.Charge{}
+    err = client.Do(charge, &operations.CreateCharge{
+        Amount:   source.Amount,
+        Currency: source.Currency,
+        Source:   source.ID,
+    })
+    if err != nil {
+        tx.Rollback()
+        return nil, err
+    }
+    var transaction Entities.Transaction
+    transaction.Price = order.Price
+    transaction.ChargeID = charge.ID
+    transaction.Charge = *charge
+    var orderEntity Entities.Order
+    orderEntity.Price = order.Price
+    orderEntity.Package = *packages
+    orderEntity.Items = packages.Item
+    orderEntity.UserID = uuid.MustParse(order.UserID)
+    orderEntity.Status = *status
+    orderEntity.ServiceID = packages.ServiceID
+    orderEntity.Transaction = transaction
+    err = s.orderRepo.Insert(&orderEntity)
+    if err != nil {
+        tx.Rollback()
+        return nil, err
+    }
+    orderType, err := s.orderTypeRepo.GetByID(&order.OrderTypeID)
+    if err != nil {
+        return nil, err
+    }
+    if orderType.Name == constance.Types_Vow {
+        parsedDate, err := time.Parse("2006-01-02", order.Deadline)
+        if err != nil {
+            return nil, err
+        }
+        vowRecord := Entities.VowRecord{
+            Vow:        order.Vow,
+            Deadline:   time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, time.UTC),
+            Note:       order.Note,
+            UserID:     uuid.MustParse(order.UserID),
+            ServiceID:  packages.ServiceID,
+            VowOrderID: orderEntity.ID,
+        }
+        err = s.vowRecordRepo.Insert(&vowRecord)
+        if err != nil {
+            return nil, errors.New("failed to insert vow record")
+        }
+		
+        var orderCount int64
+        if err := s.db.Model(&Entities.Order{}).
+            Where("user_id = ?", orderEntity.UserID).
+            Count(&orderCount).Error; err != nil {
+            tx.Rollback()
+            return err
+        }
+
+		if orderCount > 2 {
+			var previousOrder Entities.Order
+			if err := s.db.
+				Where("user_id = ?", orderEntity.UserID).
+				Order("created_at desc").
+				Offset(1).
+				First(&previousOrder).Error; err == nil {
+		
+				recEntity := &Entities.Recommendation{
+					Current_service_id: previousOrder.ServiceID,
+					Next_service_id:    orderEntity.ServiceID,
+					Total:              0,
+				}
+				if err := s.recommendationRepo.Insert(recEntity); err != nil {
+					tx.Rollback()
+					return err
+				}
+			}
 		}
-	}()
-	err = client.Do(source, &operations.CreateSource{
-		Amount:   int64(order.Price * 100),
-		Currency: "thb",
-		Type:     "promptpay",
-	})
-	if err != nil {
-		return nil, err
-	}
-	charge := &omise.Charge{}
-	err = client.Do(charge, &operations.CreateCharge{
-		Amount:   source.Amount,
-		Currency: source.Currency,
-		Source:   source.ID,
-	})
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-	var transaction Entities.Transaction
-	transaction.Price = order.Price
-	transaction.ChargeID = charge.ID
-	transaction.Charge = *charge
-	var orderEntity Entities.Order
-	orderEntity.Price = order.Price
-	orderEntity.Package = *packages
-	orderEntity.Items = packages.Item
-	orderEntity.UserID = uuid.MustParse(order.UserID)
-	orderEntity.Status = *status
-	orderEntity.ServiceID = packages.ServiceID
-	orderEntity.Transaction = transaction
-	err = s.orderRepo.Insert(&orderEntity)
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-	orderType, err := s.orderTypeRepo.GetByID(&order.OrderTypeID)
-	if err != nil {
-		return nil, err
-	}
-	if orderType.Name == constance.Types_Vow {
-		parsedDate, err := time.Parse("2006-01-02", order.Deadline)
-		if err != nil {
-			return nil, err
-		}
-		vowRecord := Entities.VowRecord{
-			Vow:        order.Vow,
-			Deadline:   time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, time.UTC),
-			Note:       order.Note,
-			UserID:     uuid.MustParse(order.UserID),
-			ServiceID:  packages.ServiceID,
-			VowOrderID: orderEntity.ID,
-		}
-		err = s.vowRecordRepo.Insert(&vowRecord)
-		if err != nil {
-			return nil, errors.New("failed to insert vow record")
-		}
-	} else if orderType.Name == constance.Types_Fulfill {
-		vowRecord := Entities.VowRecord{
-			FulfilledOrderID: orderEntity.ID,
-		}
-		err = s.vowRecordRepo.Update(&order.VowRecordID, &vowRecord)
-		if err != nil {
-			return nil, errors.New("failed to update vow record")
-		}
-	}
+    } else if orderType.Name == constance.Types_Fulfill {
+        vowRecord := Entities.VowRecord{
+            FulfilledOrderID: orderEntity.ID,
+        }
+        err = s.vowRecordRepo.Update(&order.VowRecordID, &vowRecord)
+        if err != nil {
+            return nil, errors.New("failed to update vow record")
+        }
+    }
+    tx.Commit()
 	tx.Commit()
 	return &orderEntity, nil
 }
