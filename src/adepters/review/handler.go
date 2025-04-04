@@ -29,7 +29,7 @@ func (h *ReviewHandler) Insert(c *fiber.Ctx) error {
 	insertReview.Detail = review.Detail
 	userID, ok := c.Locals(constance.UserID_ctx).(string)
 	if !ok {
-		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Uable to get UserID from token", nil, nil)
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Unable to get UserID from token", nil, nil)
 	}
 	parseUserID, err := uuid.Parse(userID)
 	if err != nil {

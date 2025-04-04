@@ -57,10 +57,11 @@ func (d *OrderDriver) GetAll(config *model.Pagination) ([]*Entities.Order, int64
 
 func (d *OrderDriver) GetByID(id *string) (*Entities.Order, error) {
 	var selectOrder Entities.Order
-	if err := d.db.Preload("Status").Preload("Transaction").Preload("User", func(db *gorm.DB) *gorm.DB {
+	if err := d.db.
+		Preload("Attachments").Preload("Service").Preload("Transaction").Preload("Package").Preload("Package.OrderType").Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Omit("password")
-
-	}).Preload("Package").Preload("Package.OrderType").Where("id = ?", id).First(&selectOrder).Error; err != nil {
+	}).
+		Where("id = ?", id).First(&selectOrder).Error; err != nil {
 		return nil, err
 	}
 	return &selectOrder, nil
