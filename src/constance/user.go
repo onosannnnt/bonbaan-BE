@@ -1,4 +1,4 @@
-package Constance
+package constance
 
 var UserID_ctx = "userID"
 var Email_ctx = "email"

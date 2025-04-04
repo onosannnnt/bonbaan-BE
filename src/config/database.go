@@ -1,4 +1,4 @@
-package Config
+package config
 
 import (
 	"log"
@@ -16,9 +16,13 @@ var (
 )
 
 func init() {
-	err := godotenv.Load()
+	configPath := Initenv()
+
+	// Load the .env file
+	err := godotenv.Load(configPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Problem loading .env file: %v", err)
+		os.Exit(-1)
 	}
 
 	DbHost = os.Getenv("DB_HOST")

@@ -6,8 +6,9 @@
 *.dylib
 
 # Test binary, built with "go test -c"
+webpro-421315-firebase-adminsdk-fbsvc-4467ef61f7.json
 *.test
-
+webpro-421315-firebase-adminsdk-fbsvc-4467ef61f7.json
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
@@ -32,3 +33,5 @@ main
 # OS X generated file
 .DS_Store
 
+# Postgest database
+/databasepg

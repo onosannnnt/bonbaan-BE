@@ -1,0 +1,42 @@
+version: '3.1'
+
+services:
+  server:
+    restart: on-failure
+    container_name: bonbaan-be
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: ${PORT}
+      DB_HOST: bonbaan-db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD:  ${DB_PASSWORD}
+      DB_SCHEMA: bonbaan
+      JWT_SECRET: ${JWT_SECRET}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USER: ${MAIL_USER}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      OMISE_PUBLIC_KEY: ${OMISE_PUBLIC_KEY}
+      OMISE_SECRET_KEY: ${OMISE_SECRET_KEY}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    ports:
+      - "${PORT}:${PORT}"
+
+  postgres:
+    image: postgres:alpine
+    container_name: bonbaan-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: bonbaan
+    volumes:
+      - psql_volume_bp:/var/lib/postgresql/data
+volumes:
+  psql_volume_bp:

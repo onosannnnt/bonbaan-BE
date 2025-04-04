@@ -2,17 +2,94 @@ name: Go-test
 on: [push, pull_request]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
+    services:
+      docker:
+        image: docker:20.10.7
+        options: --privileged
+        ports:
+          - 5432:5432 # Example port, adjust as needed
+
     steps:
+      # 1. Checkout the repository
       - uses: actions/checkout@v4
+
+      # 2. Setup Go environment
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.22.x'
+          go-version: "1.22.x"
 
+      # 3. Create the .env file using secrets
+      - name: Create .env file
+        run: |
+          cat <<EOF > .env
+          DB_HOST=localhost
+          DB_PORT=5432
+          DB_USER=test
+          DB_PASSWORD=test
+          DB_SCHEMA=test
+          PORT=3000
+          JWT_SECRET=test
+          GOCACHE=off
+          CGO_ENABLED=1
+          EOF
+
+      # 4. Install Docker Compose
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      # 5. Run Docker Compose
+      - name: Start Docker Compose Services
+        run: |
+          docker-compose up -d
+
+      # 6. Wait for Services to be Ready
+      - name: Wait for Services
+        run: |
+          # Example: Wait for PostgreSQL to be ready
+          for i in {1..30}; do
+            nc -z localhost 5432 && echo "PostgreSQL is up" && exit 0
+            echo "Waiting for PostgreSQL..."
+            sleep 1
+          done
+          echo "PostgreSQL did not start in time" && exit 1
+
+      # 7. Cache Go modules
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      # 8. Install Go dependencies
+      - name: Install dependencies
+        run: go mod download
+
+      # 9. Build the Go project
       - name: Build
         run: go build -v ./...
+
+      # 10. Run tests with coverage
       - name: Test with the Go CLI
-        run: go test ./... 
+        run: go test -v -coverprofile=coverage.out ./...
+
+      # 11. Upload coverage reports to Codecov
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      # 12. Teardown Docker Compose Services
+      - name: Teardown Docker Compose
+        if: always()
+        run: |
+          docker-compose down
