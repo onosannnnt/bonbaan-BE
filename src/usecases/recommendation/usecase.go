@@ -7,18 +7,18 @@ import (
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 )
 
-type recommendationUsecase interface {
+type RecommendationUsecase interface {
     Insert(recommendation *Entities.Recommendation) error
-    SuggestNextServie(userID string, config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error)
-    InterestRating(userID string, config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error)
-    Bestseller(config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error)
+    SuggestNextServies(userID string, config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error)
+    InterestRatings(userID string, config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error)
+    Bestsellers(config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error)
 }
 
 type recommendationService struct {
     recommendationRepository RecommendationRepository
 }
 
-func NewRecommendationService(recommendationRepository RecommendationRepository) recommendationUsecase {
+func NewRecommendationService(recommendationRepository RecommendationRepository) RecommendationUsecase {
     return &recommendationService{
         recommendationRepository: recommendationRepository,
     }
@@ -89,7 +89,7 @@ func mapAttachmentToOutput(a Entities.Attachment) model.AttachmentOutput {
 
 
 
-func (r *recommendationService) SuggestNextServie(userID string, config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error) {
+func (r *recommendationService) SuggestNextServies(userID string, config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error) {
     
 	services, totalRecords, err := r.recommendationRepository.SuggestNextServie(userID, config)
     if err != nil {
@@ -112,7 +112,7 @@ func (r *recommendationService) SuggestNextServie(userID string, config *model.P
     return &outputs, pagination, nil
 }
 
-func (r *recommendationService) InterestRating(userID string,config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error) {
+func (r *recommendationService) InterestRatings(userID string,config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error) {
     services, totalRecords, err := r.recommendationRepository.InterestRating(userID,config)
     if err != nil {
         return nil, nil, err
@@ -134,7 +134,7 @@ func (r *recommendationService) InterestRating(userID string,config *model.Pagin
     return &outputs, pagination, nil
 }
 
-func (r *recommendationService) Bestseller(config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error) {
+func (r *recommendationService) Bestsellers(config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error) {
     services, totalRecords, err := r.recommendationRepository.Bestseller(config)
     if err != nil {
         return nil, nil, err

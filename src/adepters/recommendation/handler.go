@@ -10,11 +10,11 @@ import (
 
 // RecommendationHandler handles recommendation-related HTTP requests.
 type RecommendationHandler struct {
-    RecommendationUsecase recommendationUsecase.RecommendationRepository
+    RecommendationUsecase recommendationUsecase.RecommendationUsecase
 }
 
 // NewRecommendationHandler creates a new RecommendationHandler.
-func NewRecommendationHandler(usecase recommendationUsecase.RecommendationRepository) *RecommendationHandler {
+func NewRecommendationHandler(usecase recommendationUsecase.RecommendationUsecase) *RecommendationHandler {
     return &RecommendationHandler{
         RecommendationUsecase: usecase,
     }
@@ -42,7 +42,7 @@ func (h *RecommendationHandler) SuggestNextServie(c *fiber.Ctx) error {
     }
 
     // Call the SuggestNextServie usecase method.
-    outputs, pag, err := h.RecommendationUsecase.SuggestNextServie(userID, &pagination)
+    outputs, pag, err := h.RecommendationUsecase.SuggestNextServies(userID, &pagination)
     if err != nil {
         return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get service suggestions", err, nil)
     }
@@ -75,7 +75,7 @@ func (h *RecommendationHandler) InterestRating(c *fiber.Ctx) error {
     }
 
     // Call the SuggestNextServie usecase method.
-    outputs, pag, err := h.RecommendationUsecase.InterestRating(userID, &pagination)
+    outputs, pag, err := h.RecommendationUsecase.InterestRatings(userID, &pagination)
     if err != nil {
         return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get service suggestions", err, nil)
     }

@@ -15,27 +15,35 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/onosannnnt/bonbaan-BE/src/config"
+	"github.com/onosannnnt/bonbaan-BE/src/constance"
+	"gorm.io/gorm"
 
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
 	AttachmentUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/attachment"
+	RecommendationUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/recommendation"
 	ServiceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
 	"github.com/onosannnnt/bonbaan-BE/src/utils"
 	"google.golang.org/api/option"
 )
 
 type ServiceHandler struct {
-	ServiceUsecase ServiceUsecase.ServiceUsecase
-	AttachmentUsecase AttachmentUsecase.AttachmentUsecase // ...new field
-
+    ServiceUsecase        ServiceUsecase.ServiceUsecase
+    AttachmentUsecase     AttachmentUsecase.AttachmentUsecase
+    RecommendationUsecase RecommendationUsecase.RecommendationUsecase
+    DB                    *gorm.DB
 }
 
-func NewServiceHandler(svcUsecase ServiceUsecase.ServiceUsecase, attachUsecase AttachmentUsecase.AttachmentUsecase) *ServiceHandler {
+// Modify NewServiceHandler to accept the recommendation use case and DB.
+func NewServiceHandler(svcUsecase ServiceUsecase.ServiceUsecase, attachUsecase AttachmentUsecase.AttachmentUsecase, recUsecase RecommendationUsecase.RecommendationUsecase, db *gorm.DB) *ServiceHandler {
     return &ServiceHandler{
-        ServiceUsecase:    svcUsecase,
-        AttachmentUsecase: attachUsecase,
+        ServiceUsecase:        svcUsecase,
+        AttachmentUsecase:     attachUsecase,
+        RecommendationUsecase: recUsecase,
+        DB:                    db,
     }
 }
+
 func (h *ServiceHandler) CreateService(c *fiber.Ctx) error {
 	// Parse the multipart form:
 	form, err := c.MultipartForm()
@@ -470,4 +478,71 @@ func (h *ServiceHandler) DeleteService(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
 	}
 	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
+}
+func (h *ServiceHandler) RecommendService(c *fiber.Ctx) error {
+    var pagination model.Pagination
+    if err := c.QueryParser(&pagination); err != nil {
+        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid pagination parameters", err, nil)
+    }
+    if pagination.PageSize <= 0 {
+        pagination.PageSize = 10
+    }
+    if pagination.CurrentPage <= 0 {
+        pagination.CurrentPage = 1
+    }
+
+    userID, ok := c.Locals(constance.UserID_ctx).(string)
+    if !ok || userID == "" {
+        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Unable to retrieve userID from token", nil, nil)
+    }
+
+    // Check if the user has any transactions.
+    var txCount int64
+    if err := h.DB.Model(&Entities.Transaction{}).Where("user_id = ?", userID).Count(&txCount).Error; err != nil {
+        return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to count transactions", err, nil)
+    }
+
+    var outputs *[]model.ServiceOutput
+    var pag *model.Pagination
+    var err error
+
+    if txCount > 0 {
+        // Use SuggestNextServie if the user has transaction records.
+        outputs, pag, err = h.RecommendationUsecase.SuggestNextServies(userID, &pagination)
+    } else {
+        // Otherwise use InterestRating.
+        outputs, pag, err = h.RecommendationUsecase.InterestRatings(userID, &pagination)
+    }
+    if err != nil {
+        return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get service recommendations", err, nil)
+    }
+
+    return utils.ResponseJSON(c, fiber.StatusOK, "Service recommendations retrieved successfully", nil, fiber.Map{
+        "services":   outputs,
+        "pagination": pag,
+    })
+}
+
+// Bestseller returns a paginated list of Bestseller services.
+func (h *ServiceHandler) Bestseller(c *fiber.Ctx) error {
+    var pagination model.Pagination
+    if err := c.QueryParser(&pagination); err != nil {
+        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid pagination parameters", err, nil)
+    }
+    if pagination.PageSize <= 0 {
+        pagination.PageSize = 10
+    }
+    if pagination.CurrentPage <= 0 {
+        pagination.CurrentPage = 1
+    }
+
+    outputs, pag, err := h.RecommendationUsecase.Bestsellers(&pagination)
+    if err != nil {
+        return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get bestseller services", err, nil)
+    }
+
+    return utils.ResponseJSON(c, fiber.StatusOK, "Bestseller services retrieved successfully", nil, fiber.Map{
+        "services":   outputs,
+        "pagination": pag,
+    })
 }
