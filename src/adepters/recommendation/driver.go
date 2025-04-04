@@ -150,7 +150,7 @@ func (d *recommendationDriver) InterestRating(userID string, config *model.Pagin
     countSQL := `
         SELECT COUNT(DISTINCT s.id)
         FROM services s
-        JOIN service_categories sc ON s.id = sc.service_id
+        JOIN services_categories sc ON s.id = sc.service_id
         WHERE sc.category_id IN (
             SELECT category_id FROM interests WHERE user_id = ?
         )
@@ -163,7 +163,7 @@ func (d *recommendationDriver) InterestRating(userID string, config *model.Pagin
     querySQL := `
         SELECT s.*
         FROM services s
-        JOIN service_categories sc ON s.id = sc.service_id
+        JOIN services_categories sc ON s.id = sc.service_id
         WHERE sc.category_id IN (
             SELECT category_id FROM interests WHERE user_id = ?
         )
@@ -196,7 +196,7 @@ func (d *recommendationDriver) Bestseller(config *model.Pagination) (*[]Entities
     var results []result
 
     if err := d.db.
-        Model(&Entities.Transaction{}).
+        Model(&Entities.Order{}).
         Select("service_id, count(*) as count").
         Where("created_at >= ? AND created_at < ?", startOfWeek, endOfWeek).
         Group("service_id").

@@ -492,20 +492,21 @@ func (h *ServiceHandler) RecommendService(c *fiber.Ctx) error {
     }
 
     userID, ok := c.Locals(constance.UserID_ctx).(string)
+
     if !ok || userID == "" {
         return utils.ResponseJSON(c, fiber.StatusBadRequest, "Unable to retrieve userID from token", nil, nil)
     }
-
+    fmt.Println("User ID from context:", userID)
     // Check if the user has any transactions.
     var txCount int64
-    if err := h.DB.Model(&Entities.Transaction{}).Where("user_id = ?", userID).Count(&txCount).Error; err != nil {
+    if err := h.DB.Model(&Entities.Order{}).Where("user_id = ?", userID).Count(&txCount).Error; err != nil {
         return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to count transactions", err, nil)
     }
 
     var outputs *[]model.ServiceOutput
     var pag *model.Pagination
     var err error
-
+    fmt.Println("Transaction count:", txCount)
     if txCount > 0 {
         // Use SuggestNextServie if the user has transaction records.
         outputs, pag, err = h.RecommendationUsecase.SuggestNextServies(userID, &pagination)

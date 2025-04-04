@@ -8,6 +8,7 @@ import (
 	attachmentUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/attachment"
 	recommendationUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/recommendation"
 	serviceUsecase "github.com/onosannnnt/bonbaan-BE/src/usecases/service"
+	"github.com/onosannnnt/bonbaan-BE/src/utils/middleware"
 
 	"gorm.io/gorm"
 )
@@ -30,11 +31,9 @@ func InitServiceRouter(app *fiber.App, db *gorm.DB) {
 
     ser := app.Group("/services")
     ser.Get("/", serviceHandler.GetAllServices)
-    ser.Get("/:id", serviceHandler.GetByServiceID)
-    ser.Get("/:id/packages", serviceHandler.GetPackagesbyServiceID)
 
-    // protected := ser.Group("/")
-    // protected.Use(middleware.IsAuth)
+    protected := ser.Group("/")
+    protected.Use(middleware.IsAuth)
 
     // admin := protected.Group("/")
     // admin.Use(middleware.IsAdmin)
@@ -44,6 +43,9 @@ func InitServiceRouter(app *fiber.App, db *gorm.DB) {
     ser.Delete("/:id", serviceHandler.DeleteService)
 
     // New endpoints for recommendations and bestsellers.
-    ser.Get("/recommend", serviceHandler.RecommendService)
-    ser.Get("/bestseller", serviceHandler.Bestseller)
+    protected.Get("/recommend", serviceHandler.RecommendService)
+    protected.Get("/bestseller", serviceHandler.Bestseller)
+    // ser.Get("/:id", serviceHandler.GetByServiceID)
+    // ser.Get("/:id/packages", serviceHandler.GetPackagesbyServiceID)
+
 }
