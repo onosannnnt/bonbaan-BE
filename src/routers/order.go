@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
+	notificationAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/notification"
 	orderAdepter "github.com/onosannnnt/bonbaan-BE/src/adepters/order"
 	orderTypeAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/order_type"
 	packageAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/package"
@@ -25,9 +26,11 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	packageRepo := packageAdapter.NewPackageDriver(db)
 	orderTypeRepo := orderTypeAdapter.NewOrderTypeDriver(db)
 
+	notificationnRepo := notificationAdapter.NewNotificationDriver(db)
+
 	orderRepo := orderAdepter.NewOrderDriver(db, statusUsecase)
 	serviceRepo := serviceAdapter.NewServiceDriver(db)
-	orderUsecase := orderUsecase.NewOrderService(orderRepo, serviceRepo, statusRepo, db, packageRepo, vowRecordRepo, orderTypeRepo)
+	orderUsecase := orderUsecase.NewOrderService(orderRepo, serviceRepo, statusRepo, db, packageRepo, vowRecordRepo, orderTypeRepo, notificationnRepo)
 	orderHandler := orderAdepter.NewOrderHandler(orderUsecase, *vowRecordUsecase)
 
 	order := app.Group("/orders")

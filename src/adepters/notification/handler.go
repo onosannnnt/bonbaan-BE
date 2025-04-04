@@ -28,7 +28,10 @@ func (h *NotificationHandler) Insert(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "UserID is required", nil, nil)
 	}
 	uuidUserID := uuid.MustParse(inputNotification.UserID)
-	uuidOrderID := uuid.MustParse(inputNotification.OrderID)
+	var uuidOrderID uuid.UUID
+	if inputNotification.OrderID != "" {
+		uuidOrderID = uuid.MustParse(inputNotification.OrderID)
+	}
 	notification := Entities.Notification{
 		UserID:  uuidUserID,
 		Header:  inputNotification.Header,

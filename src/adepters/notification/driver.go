@@ -35,7 +35,7 @@ func (d *NotificationDriver) GetAll(pagination *model.Pagination) ([]*Entities.N
 
 func (d *NotificationDriver) GetByID(id *string) (*Entities.Notification, error) {
 	var selectNotification Entities.Notification
-	if err := d.db.Where("id = ?", id).First(&selectNotification).Error; err != nil {
+	if err := d.db.Preload("Order").Where("id = ?", id).First(&selectNotification).Error; err != nil {
 		return nil, err
 	}
 	return &selectNotification, nil

@@ -84,7 +84,7 @@ func (d *ServiceDriver) GetAll(config *model.Pagination) (*[]Entities.Service, i
 
 func (d *ServiceDriver) GetByID(id *string) (*Entities.Service, error) {
 	var service Entities.Service
-	if err := d.db.Preload("Review_utils").Preload("Categories").Preload("Packages").Preload("Attachments").Where("id = ?", id).First(&service).Error; err != nil {
+	if err := d.db.Preload("Review_utils").Preload("Categories").Preload("Packages").Preload("Packages.OrderType").Preload("Attachments").Where("id = ?", id).First(&service).Error; err != nil {
 		return nil, err
 	}
 
@@ -107,39 +107,39 @@ func (d *ServiceDriver) GetPackagebyServiceID(serviceID *string) (*[]Entities.Pa
 }
 
 func (d *ServiceDriver) Update(service *Entities.Service) error {
-    tx := d.db.Begin()
-    if err := tx.Model(&Entities.Service{}).Where("id = ?", service.ID).Updates(service).Error; err != nil {
-        tx.Rollback()
-        return err
-    }
+	tx := d.db.Begin()
+	if err := tx.Model(&Entities.Service{}).Where("id = ?", service.ID).Updates(service).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
 
-    // Update Categories association only if provided.
+	// Update Categories association only if provided.
 	// fmt.Println(service.Categories)
-    if service.Categories != nil {
-        if err := tx.Model(service).Association("Categories").Replace(service.Categories); err != nil {
-            tx.Rollback()
-            return err
-        }
-    }
+	if service.Categories != nil {
+		if err := tx.Model(service).Association("Categories").Replace(service.Categories); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
 
-    // Update Packages association only if provided.
+	// Update Packages association only if provided.
 	// fmt.Println(service.Packages)
-    if service.Packages != nil {
-        if err := tx.Model(service).Association("Packages").Replace(service.Packages); err != nil {
-            tx.Rollback()
-            return err
-        }
-    }
+	if service.Packages != nil {
+		if err := tx.Model(service).Association("Packages").Replace(service.Packages); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
 
-    // Update Attachments association only if provided.
-    if service.Attachments != nil {
-        if err := tx.Model(service).Association("Attachments").Replace(service.Attachments); err != nil {
-            tx.Rollback()
-            return err
-        }
-    }
+	// Update Attachments association only if provided.
+	if service.Attachments != nil {
+		if err := tx.Model(service).Association("Attachments").Replace(service.Attachments); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
 
-    return tx.Commit().Error
+	return tx.Commit().Error
 }
 
 func (d *ServiceDriver) Delete(id *string) error {

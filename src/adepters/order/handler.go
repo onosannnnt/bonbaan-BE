@@ -39,8 +39,11 @@ func (h *OrderHandler) Insert(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
 	}
 	order.UserID = c.Locals(constance.UserID_ctx).(string)
-	h.OrderUsecase.Insert(&order)
-	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
+	insertOrder, err := h.OrderUsecase.Insert(&order)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to insert order", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusCreated, "Success", nil, insertOrder)
 }
 
 func (h *OrderHandler) GetAll(c *fiber.Ctx) error {
@@ -77,6 +80,9 @@ func (h *OrderHandler) GetAll(c *fiber.Ctx) error {
 
 func (h *OrderHandler) GetByID(c *fiber.Ctx) error {
 	id := c.Params("id")
+	if id == "" {
+		return utils.ResponseJSON(c, fiber.StatusBadRequest, "ID is required", nil, nil)
+	}
 	order, err := h.OrderUsecase.GetByID(&id)
 	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to get order", err, nil)
@@ -142,10 +148,11 @@ func (h *OrderHandler) CancelOrder(c *fiber.Ctx) error {
 
 func (h *OrderHandler) ApproveOrder(c *fiber.Ctx) error {
 	id := c.Params("id")
-	if err := h.OrderUsecase.ApproveOrder(&id); err != nil {
+	order, err := h.OrderUsecase.ApproveOrder(&id)
+	if err != nil {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to accept order", err, nil)
 	}
-	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
+	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, order)
 }
 
 func (h *OrderHandler) SubmitOrder(c *fiber.Ctx) error {
@@ -232,8 +239,11 @@ func (h *OrderHandler) InsertCustomOrder(c *fiber.Ctx) error {
 		return utils.ResponseJSON(c, fiber.StatusBadRequest, "Failed to parse request body", err, nil)
 	}
 	order.UserID = c.Locals(constance.UserID_ctx).(string)
-	h.OrderUsecase.InsertCustomOrder(&order)
-	return utils.ResponseJSON(c, fiber.StatusOK, "Success", nil, nil)
+	insertOrder, err := h.OrderUsecase.InsertCustomOrder(&order)
+	if err != nil {
+		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Failed to insert order", err, nil)
+	}
+	return utils.ResponseJSON(c, fiber.StatusCreated, "Success", nil, insertOrder)
 }
 
 func (h *OrderHandler) AcceptOrder(c *fiber.Ctx) error {
