@@ -20,7 +20,6 @@ import (
 // ส่วนที่ต่อกับ input handler
 type UserUsecase interface {
 	InsertOTP(user *Entities.User) (string, error)
-	InsertInterest(interests *[]Entities.Interest, userID *string) error  // <-- changed parameter type
 	Register(user *model.CreateUserRequest) error
 	Login(user *Entities.User) (token *string, err error)
 	Me(UserID *string) (user *Entities.User, err error)

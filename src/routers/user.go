@@ -27,7 +27,7 @@ func InitUserRouter(app *fiber.App, db *gorm.DB) {
 	vowRecordUsecase := vowRecordUsecase.NewVowRecordService(vowRecordRepo)
 
 	orderRepo := orderAdepter.NewOrderDriver(db, nil)
-	orderUsecase := orderUsecase.NewOrderService(orderRepo, nil, nil, nil, nil, nil, nil, nil)
+	orderUsecase := orderUsecase.NewOrderService(orderRepo, nil, nil, nil, nil, nil, nil, nil,nil)
 	orderHandler := orderAdepter.NewOrderHandler(orderUsecase, *vowRecordUsecase)
 
 	categoryRepo := categoryAdapter.NewCategoryDriver(db)

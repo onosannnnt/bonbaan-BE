@@ -90,26 +90,6 @@ func (d *UserDriver) DeleteInterest(userID *string, categoryID *string) error {
 	return nil
 }
 
-func (d *UserDriver) GetInterestByUserID(id *string) (*Entities.User, error) {
-	var user Entities.User
-	if err := d.db.Preload("Category").Where("id = ?", id).First(&user).Error; err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
-func (d *UserDriver) DeleteInterest(userID *string, categoryID *string) error {
-	categoryUUID, err := uuid.Parse(*categoryID)
-	if err != nil {
-		return err
-	}
-
-	if err := d.db.Model(&Entities.User{ID: uuid.MustParse(*userID)}).Association("Category").Delete(&Entities.Category{ID: categoryUUID}); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (d *UserDriver) InsertInterest(interests *[]Entities.Interest, userID *string) error {
 
     if err := d.db.Create(interests).Error; err != nil {
