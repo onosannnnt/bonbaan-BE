@@ -69,18 +69,18 @@ func NewOrderService(orderRepo OrderRepository, serviceRepo serviceUsecase.Servi
 func (s *OrderService) Insert(order *model.OrderInputRequest) (*Entities.Order, error) {
     status, err := s.statusRepo.GetByName(&constance.Status_Unpaid)
     if err != nil {
-        return nil, err
+        return err
     }
     packages, err := s.packageRepo.GetByID(&order.PackageID)
     if err != nil {
-        return nil, err
+        return err
     }
     if packages == nil {
-        return nil, errors.New("package not found")
+        return errors.New("package not found")
     }
     client, err := omise.NewClient(config.OmisePublicKey, config.OmiseSecretKey)
     if err != nil {
-        return nil, err
+        return err
     }
     source := &omise.Source{}
     tx := s.db.Begin()
@@ -95,7 +95,7 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) (*Entities.Order, 
         Type:     "promptpay",
     })
     if err != nil {
-        return nil, err
+        return err
     }
     charge := &omise.Charge{}
     err = client.Do(charge, &operations.CreateCharge{
@@ -105,7 +105,7 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) (*Entities.Order, 
     })
     if err != nil {
         tx.Rollback()
-        return nil, err
+        return err
     }
     var transaction Entities.Transaction
     transaction.Price = order.Price
@@ -122,16 +122,16 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) (*Entities.Order, 
     err = s.orderRepo.Insert(&orderEntity)
     if err != nil {
         tx.Rollback()
-        return nil, err
+        return err
     }
     orderType, err := s.orderTypeRepo.GetByID(&order.OrderTypeID)
     if err != nil {
-        return nil, err
+        return err
     }
     if orderType.Name == constance.Types_Vow {
         parsedDate, err := time.Parse("2006-01-02", order.Deadline)
         if err != nil {
-            return nil, err
+            return err
         }
         vowRecord := Entities.VowRecord{
             Vow:        order.Vow,
@@ -143,7 +143,7 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) (*Entities.Order, 
         }
         err = s.vowRecordRepo.Insert(&vowRecord)
         if err != nil {
-            return nil, errors.New("failed to insert vow record")
+            return errors.New("failed to insert vow record")
         }
 		
         var orderCount int64
@@ -151,7 +151,7 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) (*Entities.Order, 
             Where("user_id = ?", orderEntity.UserID).
             Count(&orderCount).Error; err != nil {
             tx.Rollback()
-            return err
+            return nil,err
         }
 
 		if orderCount > 2 {
@@ -169,7 +169,7 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) (*Entities.Order, 
 				}
 				if err := s.recommendationRepo.Insert(recEntity); err != nil {
 					tx.Rollback()
-					return err
+					return nil,err
 				}
 			}
 		}

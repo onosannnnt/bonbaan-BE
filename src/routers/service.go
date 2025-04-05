@@ -45,7 +45,7 @@ func InitServiceRouter(app *fiber.App, db *gorm.DB) {
     // New endpoints for recommendations and bestsellers.
     protected.Get("/recommend", serviceHandler.RecommendService)
     protected.Get("/bestseller", serviceHandler.Bestseller)
-    // ser.Get("/:id", serviceHandler.GetByServiceID)
-    // ser.Get("/:id/packages", serviceHandler.GetPackagesbyServiceID)
+    ser.Get("/:id", serviceHandler.GetByServiceID)
+    ser.Get("/:id/packages", serviceHandler.GetPackagesbyServiceID)
 
 }
