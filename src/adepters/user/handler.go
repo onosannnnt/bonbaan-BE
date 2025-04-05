@@ -2,6 +2,7 @@ package userAdepter
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/onosannnnt/bonbaan-BE/src/constance"
 	Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 	"github.com/onosannnnt/bonbaan-BE/src/model"
@@ -193,22 +194,41 @@ func (h *UserHandler) AdminRegister(c *fiber.Ctx) error {
 }
 
 func (h *UserHandler) InsertInterest(c *fiber.Ctx) error {
-	type InsertInterest struct {
-		Interest []string `json:"categories"`
-	}
-	interest := InsertInterest{}
-	if err := c.BodyParser(&interest); err != nil {
-		return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the require fields", err, nil)
-	}
-	userID := c.Locals(constance.UserID_ctx).(string)
-	if userID == "" {
-		return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
-	}
-	err := h.userUsecase.InsertInterest(&userID, &interest.Interest)
-	if err != nil {
-		return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
-	}
-	return utils.ResponseJSON(c, fiber.StatusCreated, "success", nil, nil)
+    userID := c.Locals(constance.UserID_ctx).(string)
+    if userID == "" {
+        return utils.ResponseJSON(c, fiber.StatusUnauthorized, "missing UserID in header", nil, nil)
+    }
+
+    // Expected input: { "categories": ["<category-id>", "<category-id>", ...] }
+    var req struct {
+        Categories []string `json:"categories"`
+    }
+    if err := c.BodyParser(&req); err != nil {
+        return utils.ResponseJSON(c, fiber.ErrBadRequest.Code, "Please fill all the required fields", err, nil)
+    }
+
+    // Convert the input category IDs to a slice of Entities.Interest
+    var interests []Entities.Interest
+    uid, err := uuid.Parse(userID)
+    if err != nil {
+        return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid userID", err, nil)
+    }
+    for _, catID := range req.Categories {
+        catUUID, err := uuid.Parse(catID)
+        if err != nil {
+            return utils.ResponseJSON(c, fiber.StatusBadRequest, "Invalid category ID", err, nil)
+        }
+        interest := Entities.Interest{
+            UserID:     uid,
+            CategoryID: catUUID,
+        }
+        interests = append(interests, interest)
+    }
+
+    if err := h.userUsecase.InsertInterest(&interests, &userID); err != nil {
+        return utils.ResponseJSON(c, fiber.StatusInternalServerError, "Internal Server Error", err, nil)
+    }
+    return utils.ResponseJSON(c, fiber.StatusOK, "success", nil, nil)
 }
 
 

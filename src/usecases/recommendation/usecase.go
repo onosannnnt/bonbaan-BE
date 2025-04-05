@@ -91,6 +91,13 @@ func mapAttachmentToOutput(a Entities.Attachment) model.AttachmentOutput {
 
 func (r *recommendationService) SuggestNextServies(userID string, config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error) {
     
+    if config.PageSize <= 0 {
+		config.PageSize = 10
+	}
+	if config.CurrentPage <= 0 {
+		config.CurrentPage = 1
+	}
+
 	services, totalRecords, err := r.recommendationRepository.SuggestNextServie(userID, config)
     if err != nil {
         return nil, nil, err
@@ -113,6 +120,13 @@ func (r *recommendationService) SuggestNextServies(userID string, config *model.
 }
 
 func (r *recommendationService) InterestRatings(userID string,config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error) {
+    if config.PageSize <= 0 {
+		config.PageSize = 10
+	}
+	if config.CurrentPage <= 0 {
+		config.CurrentPage = 1
+	}
+
     services, totalRecords, err := r.recommendationRepository.InterestRating(userID,config)
     if err != nil {
         return nil, nil, err
@@ -135,6 +149,13 @@ func (r *recommendationService) InterestRatings(userID string,config *model.Pagi
 }
 
 func (r *recommendationService) Bestsellers(config *model.Pagination) (*[]model.ServiceOutput, *model.Pagination, error) {
+    if config.PageSize <= 0 {
+		config.PageSize = 10
+	}
+	if config.CurrentPage <= 0 {
+		config.CurrentPage = 1
+	}
+    
     services, totalRecords, err := r.recommendationRepository.Bestseller(config)
     if err != nil {
         return nil, nil, err

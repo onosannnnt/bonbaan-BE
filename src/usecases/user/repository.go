@@ -5,7 +5,7 @@ import Entities "github.com/onosannnnt/bonbaan-BE/src/entities"
 // ส่วนที่กำหนดการทำงานของ repository
 type UserRepository interface {
 	Insert(user *Entities.User) error
-    InsertInterest(interests *[]Entities.Interest, userID *string) error  
+    InsertInterest(interests *[]Entities.Interest, userID *string) error  // <-- changed parameter type
 	GetByEmailOrUsername(user *Entities.User) (*Entities.User, error)
 	GetByID(id *string) (*Entities.User, error)
 	Update(user *Entities.User) (*Entities.User, error)

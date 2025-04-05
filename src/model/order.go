@@ -15,7 +15,7 @@ type OrderInputRequest struct {
 	Note               string   `json:"note"`
 	Vow                string   `json:"vow"`
 	VowRecordID        string   `json:"vow_record_id"`
-	OrderTypeID        string   `json:"order_type_ID"`
+	OrderTypeID        string   `json:"order_type_id"`
 }
 
 type ChargeEvent struct {

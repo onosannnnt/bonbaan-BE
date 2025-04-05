@@ -32,7 +32,7 @@ type UserUsecase interface {
 	Delete(UserID *string) error
 	Update(user *model.UpdateRequest) (*Entities.User, error)
 	AdminRegister(user *model.CreateUserRequest) error
-	InsertInterest(user *string, category *[]string) error
+    InsertInterest(interests *[]Entities.Interest, userID *string) error  // <-- changed parameter type
 	GetInterestByUserID(UserID *string) (*[]*Entities.Category, error)
 	DeleteInterest(user *string, category *string) error
 }
@@ -298,24 +298,11 @@ func (s *UserService) AdminRegister(user *model.CreateUserRequest) error {
 	}
 	return s.userRepo.Insert(verifyUser)
 }
-func (s *UserService) InsertInterest(user *string, category *[]string) error {
-	selectUser, err := s.userRepo.GetByID(user)
-	if err != nil {
-		return err
-	}
-	for _, categoryName := range *category {
-		category, err := s.categoryRepo.GetByID(&categoryName)
-		if err != nil {
-			return err
-		}
-		selectUser.Category = append(selectUser.Category, category)
-	}
-	_, err = s.userRepo.Update(selectUser)
-	if err != nil {
-		return err
-	}
-	return nil
+
+func (s *UserService) InsertInterest(interests *[]Entities.Interest, userID *string) error {
+    return s.userRepo.InsertInterest(interests, userID)
 }
+
 
 func (s *UserService) GetInterestByUserID(UserID *string) (*[]*Entities.Category, error) {
 	selectUser, err := s.userRepo.GetInterestByUserID(UserID)

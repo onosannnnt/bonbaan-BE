@@ -2,6 +2,7 @@ package recommendationAdepter
 
 import (
 	"errors"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -87,8 +88,6 @@ func (d *recommendationDriver) SuggestNextServie(userID string, config *model.Pa
         First(&latestVow).Error; err != nil {
         return nil, 0, err
     }
-
-    // Use the ServiceID of the latest vow record as the current_service_id.
     currentServiceID := latestVow.ServiceID
 
     // Validate pagination parameters.
@@ -97,57 +96,66 @@ func (d *recommendationDriver) SuggestNextServie(userID string, config *model.Pa
     }
     offset := (config.CurrentPage - 1) * config.PageSize
 
-    // 2. Count total recommended services (exclude cases where next_service_id equals current_service_id).
-    countSQL := `
-        SELECT COUNT(*) FROM (
-            SELECT r.next_service_id
-            FROM recommendations r
-            JOIN recommendationutils ru ON ru.current_service_id = r.current_service_id
-            WHERE r.current_service_id = ? AND r.next_service_id <> ?
-        ) AS countSub
-    `
+    // 2. Count total services excluding the current service.
+    countSQL := `SELECT COUNT(*) FROM services WHERE id <> ?`
     var totalRecords int64
-    if err := d.db.Raw(countSQL, currentServiceID, currentServiceID).Scan(&totalRecords).Error; err != nil {
+    if err := d.db.Raw(countSQL, currentServiceID).Scan(&totalRecords).Error; err != nil {
         return nil, 0, err
     }
 
-    // 3. Retrieve paginated recommendations.
-    querySQL := `
-        SELECT s.*
-        FROM services s
-        JOIN (
-            SELECT r.next_service_id, (r.total * 1.0 / ru.total) AS score
-            FROM recommendations r
-            JOIN recommendationutils ru ON ru.current_service_id = r.current_service_id
-            WHERE r.current_service_id = ? AND r.next_service_id <> ?
-        ) AS sub ON s.id = sub.next_service_id
-        ORDER BY sub.score DESC
-        LIMIT ? OFFSET ?
-    `
+    // 3. Build a subquery for recommendation score.
+    subQuery := d.db.Table("recommendations r").
+        Select("r.next_service_id, (r.total * 1.0 / ru.total) AS score").
+        Joins("JOIN recommendation_utils ru ON ru.current_service_id = r.current_service_id").
+        Where("r.current_service_id = ? AND r.next_service_id <> ?", currentServiceID, currentServiceID)
+
+    // 4. Retrieve paginated services using ORM chaining with preloads.
     var services []Entities.Service
-    if err := d.db.Raw(querySQL, currentServiceID, currentServiceID, config.PageSize, offset).Scan(&services).Error; err != nil {
+    err := d.db.Model(&Entities.Service{}).
+        Select("services.*, COALESCE(sub.score, 0) as score").
+        Joins("LEFT JOIN (?) as sub ON services.id = sub.next_service_id", subQuery).
+        Where("services.id <> ?", currentServiceID).
+        Order("COALESCE(sub.score, 0) DESC").
+        Limit(config.PageSize).
+        Offset(offset).
+        Preload("Review_utils").
+        Preload("Categories").
+        Preload("Packages").
+        Preload("Packages.OrderType").
+        Preload("Attachments").
+        Find(&services).Error
+    if err != nil {
         return nil, 0, err
     }
 
+    // Optionally, recalc the Rate field from review_utils if needed.
+    for i := range services {
+        var reviewUtils Entities.Review_utils
+        if err := d.db.Where("service_id = ?", services[i].ID).First(&reviewUtils).Error; err == nil {
+            if reviewUtils.TotalReviewer > 0 {
+                services[i].Rate = float64(reviewUtils.TotalRete) / float64(reviewUtils.TotalReviewer)
+            }
+        }
+    }
     return &services, totalRecords, nil
 }
+
+
 
 func (d *recommendationDriver) InterestRating(userID string, config *model.Pagination) (*[]Entities.Service, int64, error) {
     // Validate pagination parameters.
     if config.CurrentPage < 1 || config.PageSize < 1 {
         return nil, 0, errors.New("invalid pagination parameters")
     }
-    offset := (config.CurrentPage - 1) * config.PageSize
-
+    
     // Parse the userID string into uuid.UUID.
     uid, err := uuid.Parse(userID)
     if err != nil {
         return nil, 0, err
     }
-
-    // This query retrieves services whose categories match the user's interests.
-    // It assumes a join table "service_categories" exists mapping services to categories.
-    countSQL := `
+    
+    // Count matching services.
+    countMatchingSQL := `
         SELECT COUNT(DISTINCT s.id)
         FROM services s
         JOIN services_categories sc ON s.id = sc.service_id
@@ -155,28 +163,142 @@ func (d *recommendationDriver) InterestRating(userID string, config *model.Pagin
             SELECT category_id FROM interests WHERE user_id = ?
         )
     `
-    var totalRecords int64
-    if err := d.db.Raw(countSQL, uid).Scan(&totalRecords).Error; err != nil {
+    var matchingCount int64
+    if err := d.db.Raw(countMatchingSQL, uid).Scan(&matchingCount).Error; err != nil {
         return nil, 0, err
     }
-
-    querySQL := `
-        SELECT s.*
+    
+    // Count non-matching services.
+    countNonMatchingSQL := `
+        SELECT COUNT(DISTINCT s.id)
         FROM services s
         JOIN services_categories sc ON s.id = sc.service_id
-        WHERE sc.category_id IN (
-            SELECT category_id FROM interests WHERE user_id = ?
+        WHERE s.id NOT IN (
+            SELECT s.id FROM services s
+            JOIN services_categories sc ON s.id = sc.service_id
+            WHERE sc.category_id IN (SELECT category_id FROM interests WHERE user_id = ?)
         )
-        GROUP BY s.id
-        ORDER BY COUNT(sc.category_id) DESC
-        LIMIT ? OFFSET ?
     `
-    var services []Entities.Service
-    if err := d.db.Raw(querySQL, uid, config.PageSize, offset).Scan(&services).Error; err != nil {
+    var nonMatchingCount int64
+    if err := d.db.Raw(countNonMatchingSQL, uid).Scan(&nonMatchingCount).Error; err != nil {
         return nil, 0, err
     }
+    
+    totalRecords := matchingCount + nonMatchingCount
+    // Combined offset for the entire result set.
+    offsetCombined := (config.CurrentPage - 1) * config.PageSize
+    if int64(offsetCombined) >= totalRecords {
+        // If the offset is beyond available records, return an empty slice.
+        return &[]Entities.Service{}, totalRecords, nil
+    }
+    
+    var combinedServices []Entities.Service
 
-    return &services, totalRecords, nil
+    // If the combined offset falls into the matching services.
+    if int64(offsetCombined) < matchingCount {
+        // Number of matching services available from the offset.
+        matchingToFetch := int(math.Min(float64(matchingCount-int64(offsetCombined)), float64(config.PageSize)))
+        
+        var matchingServices []Entities.Service
+        err = d.db.Model(&Entities.Service{}).
+            Joins("JOIN services_categories sc ON sc.service_id = services.id").
+            Joins("JOIN review_utils ru ON ru.service_id = services.id").
+            Where("sc.category_id IN (SELECT category_id FROM interests WHERE user_id = ?)", uid).
+            Group("services.id, ru.total_rete, ru.total_reviewer").
+            Order("(ru.total_rete / NULLIF(ru.total_reviewer, 0)) DESC").
+            Limit(matchingToFetch).
+            Offset(offsetCombined).
+            Preload("Review_utils").
+            Preload("Categories").
+            Preload("Packages").
+            Preload("Packages.OrderType").
+            Preload("Attachments").
+            Find(&matchingServices).Error
+        if err != nil {
+            return nil, 0, err
+        }
+        
+        // Update the Rate field for matching services.
+        for i := range matchingServices {
+            var reviewUtils Entities.Review_utils
+            if err := d.db.Where("service_id = ?", matchingServices[i].ID).First(&reviewUtils).Error; err == nil {
+                if reviewUtils.TotalReviewer > 0 {
+                    matchingServices[i].Rate = float64(reviewUtils.TotalRete) / float64(reviewUtils.TotalReviewer)
+                }
+            }
+        }
+        
+        combinedServices = append(combinedServices, matchingServices...)
+        
+        // Calculate how many more services are needed to fill the page.
+        remaining := config.PageSize - len(matchingServices)
+        if remaining > 0 {
+            var nonMatchingServices []Entities.Service
+            // For non-matching, since matching items were not enough, start at offset 0.
+            err = d.db.Model(&Entities.Service{}).
+                Joins("JOIN services_categories sc ON sc.service_id = services.id").
+                Joins("JOIN review_utils ru ON ru.service_id = services.id").
+                Where("services.id NOT IN (SELECT s.id FROM services s JOIN services_categories sc ON s.id = sc.service_id WHERE sc.category_id IN (SELECT category_id FROM interests WHERE user_id = ?))", uid).
+                Group("services.id, ru.total_rete, ru.total_reviewer").
+                Order("(ru.total_rete / NULLIF(ru.total_reviewer, 0)) DESC").
+                Limit(remaining).
+                Offset(0).
+                Preload("Review_utils").
+                Preload("Categories").
+                Preload("Packages").
+                Preload("Packages.OrderType").
+                Preload("Attachments").
+                Find(&nonMatchingServices).Error
+            if err != nil {
+                return nil, 0, err
+            }
+            
+            // Update the Rate field for non-matching services.
+            for i := range nonMatchingServices {
+                var reviewUtils Entities.Review_utils
+                if err := d.db.Where("service_id = ?", nonMatchingServices[i].ID).First(&reviewUtils).Error; err == nil {
+                    if reviewUtils.TotalReviewer > 0 {
+                        nonMatchingServices[i].Rate = float64(reviewUtils.TotalRete) / float64(reviewUtils.TotalReviewer)
+                    }
+                }
+            }
+            combinedServices = append(combinedServices, nonMatchingServices...)
+        }
+    } else {
+        // The combined offset falls entirely within the non-matching services.
+        nonMatchingOffset := offsetCombined - int(matchingCount)
+        var nonMatchingServices []Entities.Service
+        err = d.db.Model(&Entities.Service{}).
+            Joins("JOIN services_categories sc ON sc.service_id = services.id").
+            Joins("JOIN review_utils ru ON ru.service_id = services.id").
+            Where("services.id NOT IN (SELECT s.id FROM services s JOIN services_categories sc ON s.id = sc.service_id WHERE sc.category_id IN (SELECT category_id FROM interests WHERE user_id = ?))", uid).
+            Group("services.id, ru.total_rete, ru.total_reviewer").
+            Order("(ru.total_rete / NULLIF(ru.total_reviewer, 0)) DESC").
+            Limit(config.PageSize).
+            Offset(nonMatchingOffset).
+            Preload("Review_utils").
+            Preload("Categories").
+            Preload("Packages").
+            Preload("Packages.OrderType").
+            Preload("Attachments").
+            Find(&nonMatchingServices).Error
+        if err != nil {
+            return nil, 0, err
+        }
+        
+        // Update the Rate field for non-matching services.
+        for i := range nonMatchingServices {
+            var reviewUtils Entities.Review_utils
+            if err := d.db.Where("service_id = ?", nonMatchingServices[i].ID).First(&reviewUtils).Error; err == nil {
+                if reviewUtils.TotalReviewer > 0 {
+                    nonMatchingServices[i].Rate = float64(reviewUtils.TotalRete) / float64(reviewUtils.TotalReviewer)
+                }
+            }
+        }
+        combinedServices = append(combinedServices, nonMatchingServices...)
+    }
+    
+    return &combinedServices, totalRecords, nil
 }
 
 func (d *recommendationDriver) Bestseller(config *model.Pagination) (*[]Entities.Service, int64, error) {
@@ -226,12 +348,27 @@ func (d *recommendationDriver) Bestseller(config *model.Pagination) (*[]Entities
         serviceIDs = append(serviceIDs, r.ServiceID)
     }
 
+    // Retrieve services with associations preloaded.
     var services []Entities.Service
     if err := d.db.
         Where("id in ?", serviceIDs).
+        Preload("Review_utils").
+        Preload("Categories").
+        Preload("Packages").
+        Preload("Packages.OrderType").
+        Preload("Attachments").
         Find(&services).Error; err != nil {
         return nil, 0, err
     }
 
+    // Optionally, recalc the Rate field from review_utils if available.
+    for i := range services {
+        var reviewUtils Entities.Review_utils
+        if err := d.db.Where("service_id = ?", services[i].ID).First(&reviewUtils).Error; err == nil {
+            if reviewUtils.TotalReviewer > 0 {
+                services[i].Rate = float64(reviewUtils.TotalRete) / float64(reviewUtils.TotalReviewer)
+            }
+        }
+    }
     return &services, totalRecords, nil
 }
