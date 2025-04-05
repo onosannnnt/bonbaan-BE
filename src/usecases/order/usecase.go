@@ -80,41 +80,39 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) (*Entities.Order, 
         return nil,errors.New("package not found")
     }
 	log.Println("Order Service: ", order)
-    // client, err := omise.NewClient(config.OmisePublicKey, config.OmiseSecretKey)
-    // if err != nil {
-    //     return nil,err
-    // }
-    // source := &omise.Source{}
+    client, err := omise.NewClient(config.OmisePublicKey, config.OmiseSecretKey)
+    if err != nil {
+        return nil,err
+    }
+    source := &omise.Source{}
     tx := s.db.Begin()
-    // defer func() {
-    //     if r := recover(); r != nil {
-    //         tx.Rollback()
-    //     }
-    // }()
-    // err = client.Do(source, &operations.CreateSource{
-    //     Amount:   int64(order.Price * 100),
-    //     Currency: "thb",
-    //     Type:     "promptpay",
-    // })
-    // if err != nil {
-    //     return nil,err
-    // }
-    // charge := &omise.Charge{}
-    // err = client.Do(charge, &operations.CreateCharge{
-    //     Amount:   source.Amount,
-    //     Currency: source.Currency,
-    //     Source:   source.ID,
-    // })
-    // if err != nil {
-    //     tx.Rollback()
-    //     return nil,err
-    // }
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
+    err = client.Do(source, &operations.CreateSource{
+        Amount:   int64(order.Price * 100),
+        Currency: "thb",
+        Type:     "promptpay",
+    })
+    if err != nil {
+        return nil,err
+    }
+    charge := &omise.Charge{}
+    err = client.Do(charge, &operations.CreateCharge{
+        Amount:   source.Amount,
+        Currency: source.Currency,
+        Source:   source.ID,
+    })
+    if err != nil {
+        tx.Rollback()
+        return nil,err
+    }
     var transaction Entities.Transaction
     transaction.Price = order.Price
-    // transaction.ChargeID = charge.ID
-    // transaction.Charge = *charge
-	transaction.ChargeID = "Bypass_id"
-    // transaction.Charge =  "Bypass_charge"
+    transaction.ChargeID = charge.ID
+    transaction.Charge = *charge
     var orderEntity Entities.Order
     orderEntity.Price = order.Price
     orderEntity.Package = *packages
