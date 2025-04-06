@@ -79,7 +79,6 @@ func (s *OrderService) Insert(order *model.OrderInputRequest) (*Entities.Order, 
     if packages == nil {
         return nil,errors.New("package not found")
     }
-	log.Println("Order Service: ", order)
     client, err := omise.NewClient(config.OmisePublicKey, config.OmiseSecretKey)
     if err != nil {
         return nil,err
