@@ -507,7 +507,7 @@ func (h *ServiceHandler) RecommendService(c *fiber.Ctx) error {
     var pag *model.Pagination
     var err error
     fmt.Println("Transaction count:", txCount)
-    if txCount < 2 {
+    if txCount > 2 {
         // Use SuggestNextServie if the user has transaction records.
         outputs, pag, err = h.RecommendationUsecase.SuggestNextServies(userID, &pagination)
     } else {
