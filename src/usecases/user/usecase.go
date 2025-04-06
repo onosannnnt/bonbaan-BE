@@ -101,6 +101,7 @@ func (s *UserService) Register(user *model.CreateUserRequest) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println(role)
 	verifyUser := &Entities.User{
 		Username:  user.Username,
 		Firstname: user.Firstname,

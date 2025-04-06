@@ -116,10 +116,10 @@ func (d *recommendationDriver) SuggestNextServie(userID string, config *model.Pa
 
 		// 3. Retrieve the full list of services (without pagination).
 		err := d.db.Model(&Entities.Service{}).
-			Select("services.*, COALESCE(sub.score, 0) as score").
+			Select("services.*, COALESCE(sub.score, 0.0) as score").
 			Joins("LEFT JOIN (?) as sub ON services.id = sub.next_service_id", subQuery).
 			Where("services.id <> ?", currentServiceID).
-			Order("COALESCE(sub.score, 0) DESC").
+			Order("COALESCE(sub.score, 0.0) DESC NULLS LAST").
 			Preload("Review_utils").
 			Preload("Categories").
 			Preload("Packages").
@@ -219,7 +219,7 @@ func (d *recommendationDriver) InterestRating(userID string, config *model.Pagin
 			Joins("JOIN review_utils ru ON ru.service_id = services.id").
 			Where("sc.category_id IN (SELECT category_id FROM interests WHERE user_id = ?)", uid).
 			Group("services.id, ru.total_rete, ru.total_reviewer").
-			Order("(ru.total_rete / NULLIF(ru.total_reviewer, 0)) DESC").
+			Order("(ru.total_rete / NULLIF(ru.total_reviewer, 0.0)) DESC  NULLS LAST").
 			Preload("Review_utils").
 			Preload("Categories").
 			Preload("Packages").
@@ -245,7 +245,7 @@ func (d *recommendationDriver) InterestRating(userID string, config *model.Pagin
 			Joins("JOIN review_utils ru ON ru.service_id = services.id").
 			Where("services.id NOT IN (SELECT s.id FROM services s JOIN services_categories sc ON s.id = sc.service_id WHERE sc.category_id IN (SELECT category_id FROM interests WHERE user_id = ?))", uid).
 			Group("services.id, ru.total_rete, ru.total_reviewer").
-			Order("(ru.total_rete / NULLIF(ru.total_reviewer, 0)) DESC").
+			Order("NULLIF(ru.total_rete / NULLIF(ru.total_reviewer, 0.0), 0.0) DESC  NULLS LAST" ).
 			Preload("Review_utils").
 			Preload("Categories").
 			Preload("Packages").
@@ -288,7 +288,6 @@ func (d *recommendationDriver) InterestRating(userID string, config *model.Pagin
 	return &paginated, totalRecords, nil
 }
 
-// Bestseller retrieves best-selling services for the current week using caching.
 func (d *recommendationDriver) Bestseller(config *model.Pagination) (*[]Entities.Service, int64, error) {
 	// Determine the current week (assuming week starts on Monday).
 	now := time.Now()
@@ -306,6 +305,7 @@ func (d *recommendationDriver) Bestseller(config *model.Pagination) (*[]Entities
 	var services []Entities.Service
 
 	if cached, found := utils.Cache.Get(cacheKey); found {
+		fmt.Println("Cache hit for bestseller")
 		cachedData := cached.(struct {
 			Results  []struct {
 				ServiceID uuid.UUID
@@ -322,7 +322,7 @@ func (d *recommendationDriver) Bestseller(config *model.Pagination) (*[]Entities
 			Select("service_id, count(*) as count").
 			Where("created_at >= ? AND created_at < ?", startOfWeek, endOfWeek).
 			Group("service_id").
-			Order("count DESC").
+			Order("count DESC NULLS LAST").
 			Find(&results).Error; err != nil {
 			return nil, 0, err
 		}
@@ -354,7 +354,20 @@ func (d *recommendationDriver) Bestseller(config *model.Pagination) (*[]Entities
 			}
 		}
 
-		// Cache the aggregated results.
+		// Reorder services based on the sorted results from the aggregation.
+		serviceMap := make(map[uuid.UUID]Entities.Service)
+		for _, service := range services {
+			serviceMap[service.ID] = service
+		}
+		var sortedServices []Entities.Service
+		for _, r := range results {
+			if service, ok := serviceMap[r.ServiceID]; ok {
+				sortedServices = append(sortedServices, service)
+			}
+		}
+		services = sortedServices
+
+		// Cache the aggregated and sorted results.
 		utils.Cache.Set(cacheKey, struct {
 			Results  []struct {
 				ServiceID uuid.UUID
@@ -364,19 +377,12 @@ func (d *recommendationDriver) Bestseller(config *model.Pagination) (*[]Entities
 		}{Results: results, Services: services}, utils.DefaultExpiration)
 	}
 
-	totalRecords := int64(len(results))
-	if config.CurrentPage < 1 || config.PageSize < 1 {
-		return nil, 0, errors.New("invalid pagination parameters")
+	// You might want to return the total count of orders as well.
+	// For example, if needed:
+	var totalCount int64
+	for _, r := range results {
+		totalCount += r.Count
 	}
-	startIndex := (config.CurrentPage - 1) * config.PageSize
-	endIndex := startIndex + config.PageSize
-	if startIndex >= len(services) {
-		empty := []Entities.Service{}
-		return &empty, totalRecords, nil
-	}
-	if endIndex > len(services) {
-		endIndex = len(services)
-	}
-	paginated := services[startIndex:endIndex]
-	return &paginated, totalRecords, nil
+	return &services, totalCount, nil
 }
+
