@@ -89,3 +89,11 @@ func (d *UserDriver) DeleteInterest(userID *string, categoryID *string) error {
 	}
 	return nil
 }
+
+func (d *UserDriver) InsertInterest(interests *[]Entities.Interest, userID *string) error {
+
+    if err := d.db.Create(interests).Error; err != nil {
+        return err
+    }
+    return nil
+}

@@ -6,6 +6,7 @@ import (
 	orderAdepter "github.com/onosannnnt/bonbaan-BE/src/adepters/order"
 	orderTypeAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/order_type"
 	packageAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/package"
+	recommendationAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/recommendation"
 	serviceAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/service"
 	statusAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/status"
 	vowrecordAdapter "github.com/onosannnnt/bonbaan-BE/src/adepters/vow_record"
@@ -27,10 +28,11 @@ func InitOrderRouter(app *fiber.App, db *gorm.DB) {
 	orderTypeRepo := orderTypeAdapter.NewOrderTypeDriver(db)
 
 	notificationnRepo := notificationAdapter.NewNotificationDriver(db)
+	recommendationRepo := recommendationAdapter.NewRecommendationDriver(db)
 
 	orderRepo := orderAdepter.NewOrderDriver(db, statusUsecase)
 	serviceRepo := serviceAdapter.NewServiceDriver(db)
-	orderUsecase := orderUsecase.NewOrderService(orderRepo, serviceRepo, statusRepo, db, packageRepo, vowRecordRepo, orderTypeRepo, notificationnRepo)
+	orderUsecase := orderUsecase.NewOrderService(orderRepo, serviceRepo, statusRepo, db, packageRepo, vowRecordRepo, orderTypeRepo, notificationnRepo, recommendationRepo)
 	orderHandler := orderAdepter.NewOrderHandler(orderUsecase, *vowRecordUsecase)
 
 	order := app.Group("/orders")
