@@ -13,11 +13,63 @@ type ServiceDriver struct {
 	db *gorm.DB
 }
 
-func NewServiceDriver(db *gorm.DB) serviceUsecase.ServiceRepository {
-	return &ServiceDriver{
-		db: db,
+// Add this method to the ServiceDriver struct
+func (d *ServiceDriver) InitializeFullTextSearchIndex() error {
+    // First check if the Thai text search configuration exists
+    var thaiConfigExists bool
+    err := d.db.Raw("SELECT EXISTS (SELECT 1 FROM pg_ts_config WHERE cfgname = 'thai')").Scan(&thaiConfigExists).Error
+    if err != nil {
+        return err
+    }
+    
+    // Create Thai text search configuration if it doesn't exist
+    if !thaiConfigExists {
+        // Create Thai configuration based on simple
+        err = d.db.Exec("CREATE TEXT SEARCH CONFIGURATION thai (COPY = simple)").Error
+        if err != nil {
+            return err
+        }
+        
+        // Alter the mapping to use simple dictionary for word type
+        err = d.db.Exec("ALTER TEXT SEARCH CONFIGURATION thai ALTER MAPPING FOR word WITH simple").Error
+        if err != nil {
+            return err
+        }
+    }
+    
+    // Check if the index already exists
+    var indexExists bool
+    err = d.db.Raw("SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_services_fts')").Scan(&indexExists).Error
+    if err != nil {
+        return err
+    }
+
+    // Create the index using the Thai configuration if it doesn't exist
+    if !indexExists {
+        return d.db.Exec("CREATE INDEX idx_services_fts ON services USING gin(to_tsvector('thai', name || ' ' || description || ' ' || address))").Error
+    }
+	//Ensure pg_trgm is enable
+	err = d.db.Exec("CREATE EXTENSION IF NOT EXISTS pg_trgm").Error
+	if err != nil {
+		return err
 	}
+
+    
+    return nil
 }
+
+// Update the NewServiceDriver function to initialize the index
+func NewServiceDriver(db *gorm.DB) serviceUsecase.ServiceRepository {
+    driver := &ServiceDriver{
+        db: db,
+    }
+    
+    // Initialize the full-text search index (ignore error for simplicity)
+    _ = driver.InitializeFullTextSearchIndex()
+    
+    return driver
+}
+
 
 // Implement the Insert method to satisfy the ServiceRepository interface
 func (d *ServiceDriver) Insert(service *Entities.Service) error {
@@ -34,9 +86,30 @@ func (d *ServiceDriver) GetAll(config *model.Pagination) (*[]Entities.Service, i
 	db := d.db.Model(&Entities.Service{}).
 		Joins("LEFT JOIN review_utils ON review_utils.service_id = services.id")
 
-	if config.Search != "" {
-		search := fmt.Sprintf("%%%s%%", config.Search)
-		db = db.Where("services.name ILIKE ? OR services.description ILIKE ?", search, search)
+	searchQuery := config.Search // สมมุติว่ามีค่าจาก user เช่น "ไอ้ไข่"
+
+	if searchQuery != "" {
+		db = db.Select(`
+			services.*,
+			ts_rank(
+				setweight(to_tsvector('thai', coalesce(services.name, '')), 'A') || 
+				setweight(to_tsvector('thai', coalesce(services.address, '')), 'C') ||
+				setweight(to_tsvector('thai', coalesce(services.description, '')), 'B'),
+				plainto_tsquery('thai', ?)
+			) AS rank,
+			similarity(services.name || ' ' || services.description || ' ' || services.address, ?) AS sim
+		`, searchQuery, searchQuery).
+			Where(`
+				(
+					(
+						setweight(to_tsvector('thai', coalesce(services.name, '')), 'A') || 
+						setweight(to_tsvector('thai', coalesce(services.address, '')), 'C') ||
+						setweight(to_tsvector('thai', coalesce(services.description, '')), 'B')
+					) @@ plainto_tsquery('thai', ?)
+					OR similarity(services.name || ' ' || services.description || ' ' || services.address, ?) > 0.0
+				)
+			`, searchQuery, searchQuery).
+			Order("rank DESC, sim DESC")
 	}
 
 	if err := db.Count(&totalRecords).Error; err != nil {

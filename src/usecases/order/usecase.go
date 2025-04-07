@@ -2,7 +2,6 @@ package orderUsecase
 
 import (
 	"errors"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
