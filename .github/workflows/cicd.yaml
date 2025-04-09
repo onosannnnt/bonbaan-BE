@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Deploy to Hostinger
 
 on:
   push:
@@ -17,17 +17,11 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 69.62.75.29 >> ~/.ssh/known_hosts
 
-      - name: Deploy via SSH
+      - name: Deploy via SSH and Docker Compose
         run: |
-          ssh root@69.62.75.29 << 'EOF'
-            cd bonbaan-BE/
-
-            # Optional: pull latest changes if repo is already cloned
-            git pull origin main
-
-            # Optional: stop old containers
-            docker compose down
-
-            # Run your Docker Compose
-            docker compose up -d --build
-          EOF
+            ssh -tt ubuntu@69.62.75.29 << 'EOF'
+                cd /bonbaan-BE/
+                git pull origin main
+                docker compose down
+                docker compose up -d --build
+                EOF
