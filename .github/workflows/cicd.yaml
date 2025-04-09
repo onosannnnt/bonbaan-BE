@@ -19,7 +19,7 @@ jobs:
 
       - name: Deploy via SSH and Docker Compose
         run: |
-            ssh -tt ubuntu@69.62.75.29 << 'EOF'
+            ssh -tt -i github-actions-key ubuntu@69.62.75.29 << 'EOF'
                 cd /bonbaan-BE/
                 git pull origin main
                 docker compose down
