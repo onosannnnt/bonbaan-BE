@@ -91,9 +91,24 @@ func (d *UserDriver) DeleteInterest(userID *string, categoryID *string) error {
 }
 
 func (d *UserDriver) InsertInterest(interests *[]Entities.Interest, userID *string) error {
+	// Parse user ID
+	userUUID, err := uuid.Parse(*userID)
+	if err != nil {
+		return err
+	}
 
-    if err := d.db.Create(interests).Error; err != nil {
-        return err
-    }
-    return nil
+	// Get the user
+	user := &Entities.User{ID: userUUID}
+
+	// Extract category IDs from interests
+	var categories []Entities.Category
+	for _, interest := range *interests {
+		categories = append(categories, Entities.Category{ID: interest.CategoryID})
+	}
+
+	// Use Association to create the many-to-many relationship
+	if err := d.db.Model(user).Association("Category").Append(categories); err != nil {
+		return err
+	}
+	return nil
 }
