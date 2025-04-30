@@ -58,15 +58,15 @@ func mapServiceToOutput(s Entities.Service) model.ServiceOutput {
 		Categories:  categories,
 		Packages:    packages,
 		Attachments: attachments,
-		UpdateAt: s.UpdatedAt.String(),
-		CreateAt: s.CreatedAt.String(),
+		UpdateAt:    s.UpdatedAt.String(),
+		CreateAt:    s.CreatedAt.String(),
 	}
 }
 
 // mapCategoryToOutput converts an Entities.Category to a model.CategoryOutput.
 func mapCategoryToOutput(c Entities.Category) model.CategoryOutput {
 	return model.CategoryOutput{
-		ID:  c.ID.String(),
+		ID:   c.ID.String(),
 		Name: c.Name,
 	}
 }
@@ -74,6 +74,7 @@ func mapCategoryToOutput(c Entities.Category) model.CategoryOutput {
 // mapPackageToOutput converts an Entities.Package to a model.PackageOutput.
 func mapPackageToOutput(p Entities.Package) model.PackageOutput {
 	return model.PackageOutput{
+		ID:          p.ID,
 		Name:        p.Name,
 		Item:        p.Item,
 		Price:       p.Price,

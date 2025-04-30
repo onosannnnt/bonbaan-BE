@@ -1,5 +1,7 @@
 package model
 
+import "github.com/google/uuid"
+
 type PackageInput struct {
 	Name        string   `json:"name"`
 	Item        []string `json:"item"`
@@ -33,11 +35,12 @@ type AttachmentOutput struct {
 }
 
 type PackageOutput struct {
-	Name        string   `json:"name"`
-	Item        []string `json:"item"`
-	Price       int      `json:"price"`
-	Description string   `json:"description"`
-	OrderTypeID string   `json:"order_type_id"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Item        []string  `json:"item"`
+	Price       int       `json:"price"`
+	Description string    `json:"description"`
+	OrderTypeID string    `json:"order_type_id"`
 }
 
 type CategoryOutput struct {
