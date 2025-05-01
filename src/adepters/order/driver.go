@@ -45,7 +45,7 @@ func (d *OrderDriver) GetAll(config *model.Pagination) ([]*Entities.Order, int64
 		return nil, 0, err
 	}
 
-	if err := d.db.Preload("Package").Preload("Package.OrderType").Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
+	if err := d.db.Preload("Package").Preload("Package.OrderType").Preload("Service").Preload("Service.Review_utils").Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Omit("password")
 	}).Order("created_at desc").
 		Limit(config.PageSize).Offset((config.CurrentPage - 1) * config.PageSize).
@@ -58,7 +58,7 @@ func (d *OrderDriver) GetAll(config *model.Pagination) ([]*Entities.Order, int64
 func (d *OrderDriver) GetByID(id *string) (*Entities.Order, error) {
 	var selectOrder Entities.Order
 	if err := d.db.
-		Preload("Attachments").Preload("Service").Preload("Transaction").Preload("Package").Preload("Package.OrderType").Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
+		Preload("Attachments").Preload("Service").Preload("Transaction").Preload("Package").Preload("Package.OrderType").Preload("Service").Preload("Service.Review_utils").Preload("Status").Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Omit("password")
 	}).
 		Where("id = ?", id).First(&selectOrder).Error; err != nil {
