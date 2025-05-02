@@ -15,61 +15,59 @@ type ServiceDriver struct {
 
 // Add this method to the ServiceDriver struct
 func (d *ServiceDriver) InitializeFullTextSearchIndex() error {
-    // First check if the Thai text search configuration exists
-    var thaiConfigExists bool
-    err := d.db.Raw("SELECT EXISTS (SELECT 1 FROM pg_ts_config WHERE cfgname = 'thai')").Scan(&thaiConfigExists).Error
-    if err != nil {
-        return err
-    }
-    
-    // Create Thai text search configuration if it doesn't exist
-    if !thaiConfigExists {
-        // Create Thai configuration based on simple
-        err = d.db.Exec("CREATE TEXT SEARCH CONFIGURATION thai (COPY = simple)").Error
-        if err != nil {
-            return err
-        }
-        
-        // Alter the mapping to use simple dictionary for word type
-        err = d.db.Exec("ALTER TEXT SEARCH CONFIGURATION thai ALTER MAPPING FOR word WITH simple").Error
-        if err != nil {
-            return err
-        }
-    }
-    
-    // Check if the index already exists
-    var indexExists bool
-    err = d.db.Raw("SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_services_fts')").Scan(&indexExists).Error
-    if err != nil {
-        return err
-    }
+	// First check if the Thai text search configuration exists
+	var thaiConfigExists bool
+	err := d.db.Raw("SELECT EXISTS (SELECT 1 FROM pg_ts_config WHERE cfgname = 'thai')").Scan(&thaiConfigExists).Error
+	if err != nil {
+		return err
+	}
 
-    // Create the index using the Thai configuration if it doesn't exist
-    if !indexExists {
-        return d.db.Exec("CREATE INDEX idx_services_fts ON services USING gin(to_tsvector('thai', name || ' ' || description || ' ' || address))").Error
-    }
+	// Create Thai text search configuration if it doesn't exist
+	if !thaiConfigExists {
+		// Create Thai configuration based on simple
+		err = d.db.Exec("CREATE TEXT SEARCH CONFIGURATION thai (COPY = simple)").Error
+		if err != nil {
+			return err
+		}
+
+		// Alter the mapping to use simple dictionary for word type
+		err = d.db.Exec("ALTER TEXT SEARCH CONFIGURATION thai ALTER MAPPING FOR word WITH simple").Error
+		if err != nil {
+			return err
+		}
+	}
+
+	// Check if the index already exists
+	var indexExists bool
+	err = d.db.Raw("SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_services_fts')").Scan(&indexExists).Error
+	if err != nil {
+		return err
+	}
+
+	// Create the index using the Thai configuration if it doesn't exist
+	if !indexExists {
+		return d.db.Exec("CREATE INDEX idx_services_fts ON services USING gin(to_tsvector('thai', name || ' ' || description || ' ' || address))").Error
+	}
 	//Ensure pg_trgm is enable
 	err = d.db.Exec("CREATE EXTENSION IF NOT EXISTS pg_trgm").Error
 	if err != nil {
 		return err
 	}
 
-    
-    return nil
+	return nil
 }
 
 // Update the NewServiceDriver function to initialize the index
 func NewServiceDriver(db *gorm.DB) serviceUsecase.ServiceRepository {
-    driver := &ServiceDriver{
-        db: db,
-    }
-    
-    // Initialize the full-text search index (ignore error for simplicity)
-    _ = driver.InitializeFullTextSearchIndex()
-    
-    return driver
-}
+	driver := &ServiceDriver{
+		db: db,
+	}
 
+	// Initialize the full-text search index (ignore error for simplicity)
+	_ = driver.InitializeFullTextSearchIndex()
+
+	return driver
+}
 
 // Implement the Insert method to satisfy the ServiceRepository interface
 func (d *ServiceDriver) Insert(service *Entities.Service) error {
@@ -173,7 +171,7 @@ func (d *ServiceDriver) GetByID(id *string) (*Entities.Service, error) {
 
 func (d *ServiceDriver) GetPackagebyServiceID(serviceID *string) (*[]Entities.Package, error) {
 	var packages []Entities.Package
-	if err := d.db.Where("service_id = ?", serviceID).Find(&packages).Error; err != nil {
+	if err := d.db.Preload("OrderType").Where("service_id = ?", serviceID).Find(&packages).Error; err != nil {
 		return nil, err
 	}
 	return &packages, nil
